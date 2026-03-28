@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Board</title>
+    <script src="https://unpkg.com/axios@1.13.2/dist/axios.min.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        height: 100%;
+        width: 100%;
+      }
+      .board {
+        height: 7vw;
+        width: 18vw;
+        background-color: lightcoral;
+        border-radius: 15px;
+        text-align: center;
+        align-content: center;
+        font-size: large;
+        font-weight: bold;
+        font-family: funnel display;
+        cursor: pointer;
+      }
+
+      .ujala {
+        display: flex;
+      }
+    </style>
+  </head>
+
+  <body style="position: relative">
+    <h1
+      style="
+        height: 50px;
+        text-align: center;
+        font-weight: bolder;
+        font-family: funnel display;
+        text-transform: uppercase;
+      "
+    ></h1>
+    <hr />
+
+    <button
+      id="add-b1"
+      style="
+        background-color: lightgreen;
+        position: absolute;
+        right: 5%;
+        top: 0.5%;
+        font-weight: bolder;
+        padding: 10px 13px;
+        border-radius: 15px;
+        border: none;
+        cursor: pointer;
+        font-size: large;
+      "
+    >
+      Create board
+    </button>
+
+    <div
+      id="boards-container"
+      style="
+        width: 100%;
+        padding: 10px 30px;
+        height: 94%;
+        background-color: lightblue;
+        display: flex;
+        align-items: flex-start;
+        justify-content: flex-start;
+        gap: 10px;
+      "
+    >
+      <!-- <div class="board"></div> -->
+    </div>
+
+    <div
+      id="add-board"
+      style="
+        position: absolute;
+        top: 0%;
+        left: 0%;
+        align-content: center;
+        text-align: center;
+        height: 100%;
+        width: 100%;
+        backdrop-filter: blur(4px);
+        display: none;
+        align-items: center;
+        justify-content: center;
+      "
+    >
+      <div
+        style="
+          display: flex;
+          align-items: stretch;
+          justify-content: center;
+          flex-direction: column;
+          gap: 28px;
+          background: #ffffff;
+          width: min(420px, 90vw);
+          padding: 40px 36px;
+          border-radius: 16px;
+          box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+        "
+      >
+        <h3 style="
+          font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+          font-size: 1.15rem;
+          font-weight: 600;
+          color: #1a1a2e;
+          letter-spacing: -0.01em;
+          margin: 0;
+        ">New Board</h3>
+
+        <input
+          style="
+            padding: 12px 0;
+            font-size: 1rem;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            width: 100%;
+            border: none;
+            border-bottom: 2px solid #e0e0e0;
+            outline: none;
+            background: transparent;
+            color: #1a1a2e;
+            transition: border-color 0.2s ease;
+          "
+          type="text"
+          placeholder="Enter board title"
+          onfocus="this.style.borderBottomColor='#1a1a2e'"
+          onblur="this.style.borderBottomColor='#e0e0e0'"
+        />
+
+        <button
+          id="add-b2"
+          style="
+            padding: 12px 24px;
+            font-size: 0.875rem;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            background: #1a1a2e;
+            color: #ffffff;
+            transition: background 0.2s ease, transform 0.1s ease;
+            align-self: flex-end;
+          "
+          onmouseover="this.style.background='#16213e'"
+          onmouseout="this.style.background='#1a1a2e'"
+          onmousedown="this.style.transform='scale(0.97)'"
+          onmouseup="this.style.transform='scale(1)'"
+        >
+          Create
+        </button>
+      </div>
+    </div>
+
+    <script>
+      const button = document.querySelector("#add-b1");
+      const addButton = document.querySelector("#add-b2");
+      const header = document.querySelector("h1");
+      const boardContainer = document.querySelector("#boards-container");
+      const addBoardDiv = document.querySelector("#add-board");
+      const orgId = localStorage.getItem("orgId");
+      let token = localStorage.getItem("token");
+      const setBoardTitle = () => {
+        const orgTitle = localStorage.getItem("boardTitle") || "Board";
+        if (header) {
+          header.textContent = orgTitle;
+        }
+      };
+
+      const getAllBoards = async () => {
+        try {
+          const response = await axios.get("/boards", {
+            headers: {
+              orgId,
+              Authorization: token,
+              "Content-Type": "application/json",
+            },
+          });
+
+          const boards = response.data.boards;
+          if (!boardContainer) {
+            console.error("boards-container not found in DOM");
+            return;
+          }
+
+          boards.forEach((board) => {
+            const div = document.createElement("div");
+            div.classList.add("board");
+            div.id = String(board.id ?? "");
+            div.textContent = board.title ?? "Untitled Board";
+            boardContainer.appendChild(div);
+          });
+          openIssues();
+        } catch (error) {
+          console.error("Failed to fetch boards:", error);
+        }
+      };
+
+      const openIssues = () => {
+        const boards = boardContainer.querySelectorAll(".board");
+        if (!boards) return;
+        boards.forEach((board) => {
+          board.addEventListener("click", () => {
+            console.log("clicked");
+
+            localStorage.setItem("boardId", board.id);
+            localStorage.setItem("boardTitle", board.innerText);
+            window.location.href = "/issue";
+          });
+        });
+      };
+
+      setBoardTitle();
+      getAllBoards();
+      button.addEventListener("click", () => {
+        addBoardDiv.style.display = "flex";
+      });
+      addButton.addEventListener("click", async () => {
+        const title = addBoardDiv.querySelector("input")?.value.trim();
+        console.log(title);
+
+        if (title === "") return;
+        try {
+          const response = await axios.post(
+            "/board",
+            {
+              title,
+            },
+            {
+              headers: {
+                Authorization: token,
+                orgId,
+              },
+            },
+          );
+
+          console.log(response.data);
+          boardContainer.innerHTML = "";
+          addBoardDiv.style.display = "none";
+          getAllBoards();
+        } catch (error) {
+          console.error("Failed to create board:", error);
+        }
+      });
+    </script>
+  </body>
+</html>

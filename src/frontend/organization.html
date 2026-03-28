@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Organizations | Workspace</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+      :root {
+        --bg-base: #0f172a;
+        --bg-surface: #1e293b;
+        --bg-input: #1e293b;
+        --border-color: #334155;
+        --accent-primary: #2dd4bf;
+        --accent-hover: #5eead4;
+        --text-primary: #f8fafc;
+        --text-secondary: #94a3b8;
+        --error: #fb7185;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family:
+          "Inter",
+          system-ui,
+          -apple-system,
+          sans-serif;
+      }
+
+      body {
+        background-color: var(--bg-base);
+        color: var(--text-primary);
+        height: 100vh;
+        width: 100vw;
+        display: flex;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      /* --- Layout --- */
+      #main-layout {
+        display: flex;
+        width: 100%;
+        height: 100%;
+      }
+
+      /* --- Left: Create Section (Integrated) --- */
+      #create-section {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 80px;
+        max-width: 800px;
+        margin: 0 auto;
+      }
+
+      #create-section h1 {
+        font-size: 3.5rem;
+        font-weight: 800;
+        letter-spacing: -0.04em;
+        margin-bottom: 12px;
+        line-height: 1;
+      }
+
+      #create-section .description {
+        font-size: 1.25rem;
+        color: var(--text-secondary);
+        margin-bottom: 60px;
+        max-width: 600px;
+        line-height: 1.6;
+      }
+
+      .form-area {
+        display: flex;
+        flex-direction: column;
+        gap: 32px;
+        width: 100%;
+        max-width: 500px;
+      }
+
+      .input-group {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .input-group label {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+
+      input,
+      textarea {
+        background-color: var(--bg-input);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 16px 20px;
+        color: var(--text-primary);
+        font-size: 1rem;
+        transition: all 0.2s ease;
+        outline: none;
+      }
+
+      input:focus,
+      textarea:focus {
+        border-color: var(--accent-primary);
+        box-shadow: 0 0 0 4px rgba(45, 212, 191, 0.1);
+        background-color: rgba(30, 41, 59, 0.8);
+      }
+
+      textarea {
+        height: 140px;
+        resize: none;
+      }
+
+      #create-btn {
+        background-color: var(--accent-primary);
+        color: #0f172a;
+        border: none;
+        border-radius: 12px;
+        padding: 18px;
+        font-size: 1.1rem;
+        font-weight: 700;
+        cursor: pointer;
+        width: fit-content;
+        min-width: 200px;
+        margin-top: 20px;
+        transition: all 0.2s ease;
+        box-shadow: 0 10px 15px -3px rgba(45, 212, 191, 0.2);
+      }
+
+      #create-btn:hover {
+        background-color: var(--accent-hover);
+        transform: translateY(-2px);
+        box-shadow: 0 20px 25px -5px rgba(45, 212, 191, 0.3);
+      }
+
+      #create-btn:active {
+        transform: translateY(0);
+      }
+
+      #create-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      /* --- Right: Organizations Sidebar --- */
+      #organizations-sidebar {
+        width: 380px;
+        border-left: 1px solid var(--border-color);
+        display: flex;
+        flex-direction: column;
+        background-color: rgba(15, 23, 42, 0.6);
+        backdrop-filter: blur(10px);
+      }
+
+      .sidebar-header {
+        padding: 32px 24px;
+        border-bottom: 1px solid var(--border-color);
+      }
+
+      .sidebar-header h2 {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+      }
+
+      #all-org {
+        flex: 1;
+        overflow-y: auto;
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      #all-org::-webkit-scrollbar {
+        width: 4px;
+      }
+
+      #all-org::-webkit-scrollbar-thumb {
+        background-color: var(--border-color);
+        border-radius: 10px;
+      }
+
+      .org-item {
+        background-color: var(--bg-surface);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 18px 24px;
+        cursor: pointer;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .org-item:hover {
+        border-color: var(--accent-primary);
+        transform: scale(1.02);
+        background-color: rgba(30, 41, 59, 0.8);
+      }
+
+      .org-item p {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--text-primary);
+      }
+
+      #loading-overlay {
+        color: var(--accent-primary);
+        font-size: 0.875rem;
+        text-align: center;
+        padding: 20px;
+        font-weight: 500;
+      }
+    </style>
+  </head>
+  <body style="user-select: none">
+    <div id="main-layout">
+      <!-- Main Create Section (Integrated) -->
+      <main id="create-section">
+        <h1>New Organization</h1>
+        <p class="description">
+          Create a dedicated space for your projects and team collaboration.
+        </p>
+
+        <div class="form-area">
+          <div class="input-group">
+            <label for="org-title">Organization Title</label>
+            <input
+              type="text"
+              id="org-title"
+              placeholder="Acme Inc."
+              autocomplete="off"
+            />
+          </div>
+
+          <div class="input-group">
+            <label for="org-desc">Description</label>
+            <textarea
+              id="org-desc"
+              placeholder="What is this organization about?"
+            ></textarea>
+          </div>
+
+          <button id="create-btn">Create Organization</button>
+        </div>
+      </main>
+
+      <!-- Sidebar Section -->
+      <aside id="organizations-sidebar">
+        <div class="sidebar-header">
+          <h2>Recent Organizations</h2>
+        </div>
+        <div id="loading-overlay" style="display: none">
+          Syncing your workspace...
+        </div>
+        <div id="all-org"></div>
+      </aside>
+    </div>
+
+    <script>
+      const organizationTitle = document.querySelector("#org-title");
+      const orgdesc = document.querySelector("#org-desc");
+      const orgBtn = document.querySelector("#create-btn");
+      const orgsContainer = document.querySelector("#all-org");
+      const loadingOverlay = document.querySelector("#loading-overlay");
+
+      function openBoard() {
+        const clickedOrgs = document.querySelectorAll(".org-item");
+
+        if (clickedOrgs.length === 0) {
+          return;
+        }
+
+        clickedOrgs.forEach((clickedOrg) => {
+          clickedOrg.addEventListener("click", (e) => {
+            e.stopPropagation();
+
+            const title = clickedOrg.querySelector("p").innerText;
+            console.log(title);
+            localStorage.setItem("orgId", clickedOrg.id);
+            localStorage.setItem("boardTitle", title);
+            window.location.href = "/board";
+          });
+        });
+      }
+      async function getOrganizations() {
+        loadingOverlay.style.display = "block";
+        try {
+          const response = await axios.get("/org-info", {
+            headers: {
+              'Authorization': localStorage.getItem("token"),
+            },
+          });
+
+          const orgData = response.data.userOrganizations;
+          orgsContainer.innerHTML = "";
+
+          orgData.forEach((org) => {
+            const div = document.createElement("div");
+            div.id = org.id;
+            div.classList.add("org-item");
+            div.innerHTML = `<p>${org.orgTitle}</p>`;
+            orgsContainer.appendChild(div);
+          });
+        } catch (error) {
+          console.error("Failed to load organizations", error);
+        } finally {
+          openBoard();
+          loadingOverlay.style.display = "none";
+        }
+      }
+
+      getOrganizations();
+      // openBoard();
+
+      orgBtn.addEventListener("click", async () => {
+        const orgTitle = organizationTitle.value.trim();
+        const description = orgdesc.value.trim();
+
+        if (!orgTitle) {
+          organizationTitle.focus();
+          organizationTitle.style.borderColor = "var(--error)";
+          setTimeout(
+            () => (organizationTitle.style.borderColor = "var(--border-color)"),
+            2000,
+          );
+          return;
+        }
+
+        try {
+          await axios.post(
+            "/organization",
+            {
+              orgTitle,
+              description,
+            },
+            {
+              headers: {
+                Authorization: localStorage.getItem("token"),
+              },
+            },
+          );
+
+          organizationTitle.value = "";
+          orgdesc.value = "";
+          await getOrganizations();
+        } catch (error) {
+          console.error("Failed to create organization", error);
+        }
+      });
+    </script>
+  </body>
+</html>

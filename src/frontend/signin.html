@@ -3,14 +3,14 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SignUp</title>
+    <title>SignIn</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <link
       href="https://fonts.googleapis.com/css2?family=Funnel+Display:wght@300..800&display=swap"
       rel="stylesheet"
     />
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <style>
 
       * {
@@ -23,20 +23,21 @@
         height: 100%;
         width: 100%;
       }
-      #left {
+
+
+      #right {
         height: 100%;
         width: 50%;
         overflow: hidden;
       }
-      #left img {
+      #right img {
         height: 100%;
         width: 100%;
         object-fit: cover;
-
       }
 
-      #right {
-        height: 100%;
+      #left {
+        height: 100vh;
         width: 50%;
         overflow: hidden;
         background: linear-gradient(135deg, #0f0000 0%, #050505 100%);
@@ -49,7 +50,7 @@
         font-family: "Funnel Display", sans-serif;
       }
 
-      #right h1 {
+      #left h1 {
         margin-bottom: 70px;
         font-size: 80px;
         font-weight: 700;
@@ -57,7 +58,7 @@
         text-shadow: 2px 2px 10px rgba(158, 26, 26, 0.4);
       }
 
-      #right input {
+      #left input {
         width: 320px;
         padding: 12px 18px;
         font-size: 18px;
@@ -69,13 +70,13 @@
         transition: all 0.3s ease;
       }
 
-      #right input:focus {
+      #left input:focus {
         border-color: #9e1a1a;
         background: rgba(60, 20, 20, 0.7);
         box-shadow: 0 0 15px rgba(158, 26, 26, 0.3);
       }
 
-      #right button {
+      #left button {
         margin-top: 10px;
         padding: 12px 40px;
         font-size: 20px;
@@ -89,54 +90,54 @@
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
       }
 
-      #right button:hover {
+      #left button:hover {
         background: #c42121;
         color: #eab000;
         transform: translateY(-2px);
         box-shadow: 0 6px 20px rgba(234, 176, 0, 0.2);
       }
 
-      #right button:active {
+      #left button:active {
         transform: translateY(0);
       }
 
-      #right input::placeholder {
+      #left input::placeholder {
         color: #888;
       }
     </style>
   </head>
   <body style="display: flex">
-    <div id="left"><img src="./img1.jpg" alt="img" /></div>
-    <div id="right">
+    <div id="left">
       <h1>Wellcome,</h1>
       <input type="text" placeholder="Enter user name" id="nameInput" />
       <input type="password" placeholder="Enter password" id="passinput" />
-      <button>SignUp</button>
-
-      <p>already have an account? <a href="/signin">Sign in</a></p>
+      <button>SignIn</button>
+      <p>Don't have any account? <a href="/">Sign up</a></p>
     </div>
+    <div id="right"><img src="./img1.jpg" alt="img" /></div>
 
     <script>
       const nameInput = document.querySelector("#nameInput");
       const passwordInput = document.querySelector("#passinput");
-      const signupButton = document.querySelector("#right button");
+      const signupButton = document.querySelector("#left button");
 
       signupButton.addEventListener("click", async () => {
         const userName = nameInput.value.trim();
         const password = passwordInput.value.trim();
 
-        console.log(userName, password);
-
         if (!userName || !password) {
           return;
         }
-        const response = await axios.post("/signup", {
+        const response = await axios.post("/signin", {
           userName,
           password,
         });
+        
+        localStorage.setItem("token", response.data.token);
 
-        passwordInput.value = ''
-        nameInput.value = ''
+        passwordInput.value = "";
+        nameInput.value = "";
+        window.location.href = "/organizations"
       });
     </script>
   </body>

@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      * {
+        padding: 0;
+        margin: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        height: 100vh;
+        width: 100vw;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .column {
+        background-color: lightseagreen;
+        height: 80vh;
+        width: 25vw;
+        border-radius: 20px;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .column-header {
+        margin-bottom: 10px;
+        padding: 10px;
+        font-size: 1.2rem;
+        font-weight: bold;
+        font-family: "Funnel Display", sans-serif;
+      }
+
+      .column-body {
+        flex: 1;
+        overflow-y: auto;
+        padding: 10px 0px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        align-items: center;
+        justify-content: flex-start;
+      }
+      .column-body::-webkit-scrollbar {
+        display: none;
+      }
+
+      .issue {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 90%;
+        padding: 14px 18px;
+        background: #ffffff;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        transition:
+          box-shadow 0.2s ease,
+          transform 0.15s ease;
+        cursor: default;
+      }
+
+      .issue:hover {
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+        transform: translateY(-1px);
+      }
+
+      .issue h3 {
+        font-family:
+          "Segoe UI",
+          system-ui,
+          -apple-system,
+          sans-serif;
+        font-size: 0.92rem;
+        font-weight: 500;
+        color: #1a1a2e;
+        letter-spacing: -0.01em;
+        margin: 0;
+      }
+
+      .issue button {
+        padding: 6px 14px;
+        font-size: 0.75rem;
+        font-family:
+          "Segoe UI",
+          system-ui,
+          -apple-system,
+          sans-serif;
+        font-weight: 600;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+        border: 1.5px solid #e0e0e0;
+        border-radius: 6px;
+        background: transparent;
+        color: #888;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .issue button:hover {
+        border-color: #e74c3c;
+        color: #e74c3c;
+        background: rgba(231, 76, 60, 0.06);
+      }
+
+      .issue button:active {
+        transform: scale(0.96);
+      }
+    </style>
+    <title>Document</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  </head>
+  <body style="position: relative">
+    <button
+      id="add-issue"
+      style="
+        position: absolute;
+        top: 1%;
+        right: 2%;
+        padding: 10px 20px;
+        font-size: 1.2rem;
+        font-weight: bold;
+        font-family: &quot;Funnel Display&quot;, sans-serif;
+        border: none;
+        border-radius: 5px;
+        background-color: #007bff;
+        color: white;
+        cursor: pointer;
+      "
+    >
+      Add Issue
+    </button>
+
+    <div
+      id="add-issue-form"
+      style="
+        display: none;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        backdrop-filter: blur(4px);
+        align-items: center;
+        justify-content: center;
+      "
+    >
+      <div
+        style="
+          display: flex;
+          align-items: stretch;
+          justify-content: center;
+          flex-direction: column;
+          gap: 28px;
+          background: #ffffff;
+          width: min(420px, 90vw);
+          padding: 40px 36px;
+          border-radius: 16px;
+          box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+        "
+      >
+        <h3
+          style="
+            font-family:
+              &quot;Segoe UI&quot;,
+              system-ui,
+              -apple-system,
+              sans-serif;
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: #1a1a2e;
+            letter-spacing: -0.01em;
+            margin: 0;
+          "
+        >
+          New Issue
+        </h3>
+
+        <input
+          style="
+            padding: 12px 0;
+            font-size: 1rem;
+            font-family:
+              &quot;Segoe UI&quot;,
+              system-ui,
+              -apple-system,
+              sans-serif;
+            width: 100%;
+            border: none;
+            border-bottom: 2px solid #e0e0e0;
+            outline: none;
+            background: transparent;
+            color: #1a1a2e;
+            transition: border-color 0.2s ease;
+          "
+          type="text"
+          placeholder="Enter issue title"
+          onfocus="this.style.borderBottomColor = '#1a1a2e'"
+          onblur="this.style.borderBottomColor = '#e0e0e0'"
+        />
+
+        <button
+          id="add-issue-btn"
+          style="
+            padding: 12px 24px;
+            font-size: 0.875rem;
+            font-family:
+              &quot;Segoe UI&quot;,
+              system-ui,
+              -apple-system,
+              sans-serif;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            background: #1a1a2e;
+            color: #ffffff;
+            transition:
+              background 0.2s ease,
+              transform 0.1s ease;
+            align-self: flex-end;
+          "
+          onmouseover="this.style.background = '#16213e'"
+          onmouseout="this.style.background = '#1a1a2e'"
+          onmousedown="this.style.transform = 'scale(0.97)'"
+          onmouseup="this.style.transform = 'scale(1)'"
+        >
+          Create
+        </button>
+      </div>
+    </div>
+
+    <div
+      id="header"
+      style="
+        text-align: center;
+        font-size: 2rem;
+        font-weight: bold;
+        font-family: &quot;Funnel Display&quot;, sans-serif;
+        padding: 10px;
+      "
+    >
+      <h1>Board Title</h1>
+    </div>
+    <hr style="width: 100%; border: 1px solid black" />
+    <div
+      style="
+        display: flex;
+        gap: 60px;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        padding: 10px;
+        margin-top: 20px;
+      "
+    >
+      <div class="column" id="todo">
+        <div class="column-header">
+          <h1>TODO</h1>
+          <hr />
+        </div>
+        <div class="column-body"></div>
+      </div>
+      <div class="column" id="ongoing">
+        <div class="column-header">
+          <h1>Ongoing</h1>
+          <hr />
+        </div>
+        <div class="column-body"></div>
+      </div>
+      <div class="column" id="done">
+        <div class="column-header">
+          <h1>Done</h1>
+          <hr />
+        </div>
+        <div class="column-body"></div>
+      </div>
+    </div>
+    <script>
+      const header = document.querySelector("#header");
+      header.textContent = localStorage.getItem("boardTitle");
+      const addIssueBtn = document.querySelector("#add-issue");
+      const addIssueForm = document.querySelector("#add-issue-form");
+      const todoIssuseDiv = document.querySelector("#todo .column-body");
+
+      const displayIssues = async (issues) => {
+        todoIssuseDiv.innerHTML = ''
+        issues.forEach((i) => {
+          const div = document.createElement("div");
+          div.classList.add("issue");
+          div.innerHTML = `
+          <h3>${i.title}</h3>
+          <button>Delete</button>
+          `;
+          todoIssuseDiv.appendChild(div);
+        });
+      };
+
+      const getIssues = async () => {
+        const boardId = localStorage.getItem("boardId");
+        const token = localStorage.getItem("token");
+
+        try {
+          const response = await axios.get("/issues", {
+            params: { boardId },
+            headers: {
+              Authorization: token,
+            },
+          });
+          const issues = response.data.issues;
+          displayIssues(issues);
+        } catch (error) {}
+      };
+
+      const addIssue = async () => {
+        const title = addIssueForm.querySelector("input").value.trim();
+        if (!title || title === "") return;
+        console.log("oooo");
+
+        try {
+          const boardId = localStorage.getItem("boardId");
+          await axios.post(
+            "/issue",
+            {
+              boardId,
+              title,
+            },
+            {
+              headers: {
+                Authorization: localStorage.getItem("token"),
+              },
+            },
+          );
+          addIssueForm.querySelector("input").value = "";
+          getIssues();
+          addIssueForm.style.display = "none";
+        } catch (error) {}
+      };
+
+      getIssues();
+
+      addIssueBtn.addEventListener("click", () => {
+        addIssueForm.style.display = "flex";
+        const addIssueFormBtn = document.querySelector("#add-issue-btn");
+        if (!addIssueFormBtn) return;
+        addIssueFormBtn.addEventListener("click", () => {
+          console.log("clicked");
+
+          addIssue();
+        });
+      });
+    </script>
+  </body>
+</html>
