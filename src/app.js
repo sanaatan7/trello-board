@@ -15,13 +15,9 @@ let boardCount = 1;
 
 const app = express();
 
-console.log(USERS);
-
+// app.use(express.static(path.join(__dirname, "frontend")));
+app.use(express.static(path.join(__dirname, "public")));
 app.use(express.json());
-
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "frontend", indexedDB.html));
-});
 
 app.post("/signup", (req, res) => {
   const uName = req.body.userName;
@@ -126,7 +122,7 @@ app.post("/board", authMiddleware, auth3Middleware, (req, res) => {
 //token,boardId, title
 app.post("/issue", authMiddleware, (req, res) => {
   const userId = req.userId;
-  const boardId = req.body.boardId;
+  const boardId = Number(req.body.boardId);
   const title = req.body.title;
   const id = issuCount++;
 
@@ -165,7 +161,6 @@ app.post("/issue", authMiddleware, (req, res) => {
 
 // token, orgId
 app.get("/boards", authMiddleware, auth3Middleware, (req, res) => {
-  const userId = req.userId;
   const orgId = req.orgId;
   const boards = BOARDS.filter((board) => board.orgId === orgId);
 
@@ -177,9 +172,17 @@ app.get("/boards", authMiddleware, auth3Middleware, (req, res) => {
 //token, boardId,
 app.get("/issues", authMiddleware, (req, res) => {
   const userId = req.userId;
-  const boardId = req.body.boardId;
+  const boardId = Number(req.query?.boardId);
+  if (!boardId) {
+    res.status(404).json({
+      Message: "Missing board Id ",
+    });
+  }
+
   const orgId = BOARDS.find((b) => b.id === boardId).orgId;
+
   const organization = ORGANIZATIONS.find((o) => o.id === orgId);
+
   const verifyUser =
     organization.admin === userId || organization.members?.includes(userId);
 
@@ -199,7 +202,7 @@ app.get("/issues", authMiddleware, (req, res) => {
   });
 });
 
-app.get("/organizations", authMiddleware, (req, res) => {
+app.get("/org-info", authMiddleware, (req, res) => {
   const userId = req.userId;
   const userOrganizations = ORGANIZATIONS.filter(
     (o) => o.admin === userId || o.members.includes(userId),
@@ -222,6 +225,26 @@ app.delete("/remove-member", authMiddleware, auth2Middleware, (req, res) => {
     return;
   }
   organization.members = organization.members.filter((m) => m != memberUserId);
+});
+
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "frontend", "index.html"));
+});
+
+app.get("/signin", (req, res) => {
+  res.sendFile(path.join(__dirname, "frontend", "signin.html"));
+});
+
+app.get("/organizations", (req, res) => {
+  res.sendFile(path.join(__dirname, "frontend", "organization.html"));
+});
+
+app.get("/board", (req, res) => {
+  res.sendFile(path.join(__dirname, "frontend", "board.html"));
+});
+
+app.get("/issue", (req, res) => {
+  res.sendFile(path.join(__dirname, "frontend", "issues.html"));
 });
 
 module.exports = app;

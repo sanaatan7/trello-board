@@ -3,6 +3,12 @@ const { USERS, ORGANIZATIONS } = require("./db/inMemoryDb");
 
 function authMiddleware(req, res, next) {
   const token = req.headers?.authorization;
+  if (!token) {
+    res.status(404).json({
+      Message: "Token not found",
+    });
+    return;
+  }
   const userId = jwt.verify(token, process.env.JWT_SECRET).userId;
 
   const userExists = USERS.find((u) => u.id === userId);
@@ -47,12 +53,15 @@ function auth2Middleware(req, res, next) {
 
 function auth3Middleware(req, res, next) {
   const userId = req.userId;
-  const orgId = req.body.orgId;
+  const orgId = Number(req.headers.orgid);
+  // console.log(orgId);
+  
   const theOrganization = ORGANIZATIONS.find((o) => o.id === orgId);
 
   if (!theOrganization) {
     res.status(404).json({
       message: "ORganization isn't exists",
+      orgId
     });
     return;
   }
