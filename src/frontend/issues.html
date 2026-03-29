@@ -64,7 +64,7 @@
         transition:
           box-shadow 0.2s ease,
           transform 0.15s ease;
-        cursor: default;
+        cursor: pointer;
       }
 
       .issue:hover {
@@ -290,18 +290,56 @@
       header.textContent = localStorage.getItem("boardTitle");
       const addIssueBtn = document.querySelector("#add-issue");
       const addIssueForm = document.querySelector("#add-issue-form");
-      const todoIssuseDiv = document.querySelector("#todo .column-body");
+      const columns = document.querySelectorAll(".column");
+      const todoCol = document.querySelector("#todo");
+      const onGoingCol = document.querySelector("#ongoing");
+      const doneCol = document.querySelector("#done");
+      let draggedItem = null;
+
+      function addDeleteListener(element) {
+        const delBtn = element.querySelector("button");
+        delBtn.addEventListener("click", async (e) => {
+          const issueId = element.id;
+
+          try {
+            await axios.delete("/issue", {
+              params: { issueId },
+              headers: {
+                Authorization: localStorage.getItem("token"),
+              },
+            });
+            element.parentElement.removeChild(element);
+          } catch (error) {
+            console.log(error);
+          }
+        });
+      }
 
       const displayIssues = async (issues) => {
-        todoIssuseDiv.innerHTML = ''
+        todoCol.querySelector(".column-body").innerHTML = "";
+        onGoingCol.querySelector(".column-body").innerHTML = "";
+        doneCol.querySelector(".column-body").innerHTML = "";
         issues.forEach((i) => {
           const div = document.createElement("div");
           div.classList.add("issue");
+          div.id = i.id;
+          div.draggable = true;
           div.innerHTML = `
           <h3>${i.title}</h3>
           <button>Delete</button>
           `;
-          todoIssuseDiv.appendChild(div);
+          if (i.status === "todo") {
+            const column = todoCol.querySelector(".column-body");
+            column.appendChild(div);
+          } else if (i.status === "ongoing") {
+            const column = onGoingCol.querySelector(".column-body");
+            column.appendChild(div);
+          } else {
+            const column = doneCol.querySelector(".column-body");
+            column.appendChild(div);
+          }
+          dragEventsOnIssue(div);
+          addDeleteListener(div);
         });
       };
 
@@ -324,17 +362,18 @@
       const addIssue = async () => {
         const title = addIssueForm.querySelector("input").value.trim();
         if (!title || title === "") return;
-        console.log("oooo");
+        const status = "todo";
 
         try {
           const boardId = localStorage.getItem("boardId");
           await axios.post(
             "/issue",
             {
-              boardId,
               title,
+              status,
             },
             {
+              params: { boardId },
               headers: {
                 Authorization: localStorage.getItem("token"),
               },
@@ -346,18 +385,61 @@
         } catch (error) {}
       };
 
-      getIssues();
+      const updateStatus = async (issueId, status) => {
+        const boardId = localStorage.getItem("boardId");
+        const token = localStorage.getItem("token");
+        await axios.patch(
+          "/issue",
+          {
+            issueId,
+            status,
+          },
+          {
+            params: { boardId },
+            headers: {
+              Authorization: token,
+            },
+          },
+        );
+      };
 
+      const dragEventsOnIssue = (element) => {
+        element.addEventListener("dragstart", (e) => {
+          draggedItem = element;
+        });
+      };
+
+      const dragEventsOnColumn = (columns) => {
+        columns.forEach((col) => {
+          col.addEventListener("dragover", (e) => {
+            e.preventDefault();
+          });
+
+          col.addEventListener("drop", (e) => {
+            e.preventDefault();
+            const parentElement = draggedItem.parentElement.parentElement.id;
+            const colParent = col.id;
+            if (col === parentElement) {
+              return;
+            } else {
+              col.querySelector(".column-body").appendChild(draggedItem);
+              updateStatus(draggedItem.id, colParent);
+            }
+          });
+        });
+      };
+      getIssues();
+      dragEventsOnColumn(columns);
       addIssueBtn.addEventListener("click", () => {
         addIssueForm.style.display = "flex";
-        const addIssueFormBtn = document.querySelector("#add-issue-btn");
-        if (!addIssueFormBtn) return;
-        addIssueFormBtn.addEventListener("click", () => {
-          console.log("clicked");
+      });
 
+      const addIssueFormBtn = document.querySelector("#add-issue-btn");
+      if (addIssueFormBtn) {
+        addIssueFormBtn.addEventListener("click", () => {
           addIssue();
         });
-      });
+      }
     </script>
   </body>
 </html>

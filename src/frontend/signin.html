@@ -12,7 +12,6 @@
       rel="stylesheet"
     />
     <style>
-
       * {
         padding: 0;
         margin: 0;
@@ -23,7 +22,6 @@
         height: 100%;
         width: 100%;
       }
-
 
       #right {
         height: 100%;
@@ -132,12 +130,12 @@
           userName,
           password,
         });
-        
+
         localStorage.setItem("token", response.data.token);
 
         passwordInput.value = "";
         nameInput.value = "";
-        window.location.href = "/organizations"
+        window.location.href = "/organizations";
       });
     </script>
   </body>
