@@ -1,11 +1,14 @@
 const express = require("express");
 const jwt = require("jsonwebtoken");
 const path = require("path");
-const { USERS, ORGANIZATIONS, BOARDS, ISSUES } = require("./db/inMemoryDb.js");
+const { USERS, ORGANIZATIONS, BOARDS } = require("./db/inMemoryDb.js");
+let {ISSUES} = require("./db/inMemoryDb.js")
 const {
   authMiddleware,
   auth2Middleware,
   auth3Middleware,
+  auth4MiddleWare,
+  auth5MiddleWare,
 } = require("./middleWare.js");
 
 let userCount = 1;
@@ -15,7 +18,6 @@ let boardCount = 1;
 
 const app = express();
 
-// app.use(express.static(path.join(__dirname, "frontend")));
 app.use(express.static(path.join(__dirname, "public")));
 app.use(express.json());
 
@@ -47,7 +49,7 @@ app.post("/signin", (req, res) => {
   const userExist = USERS.find(
     (u) => u.userName === uName && u.password === passW,
   );
-  const userId = userExist.id;
+  const userId = userExist?.id;
   if (!userExist) {
     res.status(404).json({
       message: "User not exist signup first",
@@ -119,46 +121,6 @@ app.post("/board", authMiddleware, auth3Middleware, (req, res) => {
   });
 });
 
-//token,boardId, title
-app.post("/issue", authMiddleware, (req, res) => {
-  const userId = req.userId;
-  const boardId = Number(req.body.boardId);
-  const title = req.body.title;
-  const id = issuCount++;
-
-  const findBoard = BOARDS.find((b) => b.id === boardId);
-  if (!findBoard) {
-    res.status(404).json({
-      message: "Board doesn't exists",
-    });
-    return;
-  }
-
-  const boardOrg = ORGANIZATIONS.find((o) => o.id === findBoard.orgId);
-  if (!boardOrg) {
-    res.status(404).json({
-      message: "Invalid Organization",
-    });
-    return;
-  }
-  const isUserOrAdmin =
-    boardOrg.admin === userId || boardOrg.members.includes(userId);
-
-  if (!isUserOrAdmin) {
-    res.status(404).json({
-      message: "Not an user or admin of the org",
-    });
-    return;
-  }
-  ISSUES.push({ id, title, boardId });
-
-  res.status(200).json({
-    message: "Issue is created successfully",
-    BOARDS,
-    ISSUES,
-  });
-});
-
 // token, orgId
 app.get("/boards", authMiddleware, auth3Middleware, (req, res) => {
   const orgId = req.orgId;
@@ -169,36 +131,60 @@ app.get("/boards", authMiddleware, auth3Middleware, (req, res) => {
   });
 });
 
+//token,boardId, title
+app.post("/issue", authMiddleware, auth4MiddleWare, (req, res) => {
+  const title = req.body.title;
+  const status = req.body.status;
+
+  const boardId = req.boardId;
+  const id = issuCount++;
+
+  ISSUES.push({ id, title, status, boardId });
+
+  res.status(200).json({
+    message: "Issue is created successfully",
+    BOARDS,
+    ISSUES,
+  });
+});
+
+//token, boardId, issueId, status
+app.patch("/issue", authMiddleware, auth4MiddleWare, (req, res) => {
+  const boardId = req.boardId;
+  const issueId = Number(req.body.issueId);
+  const status = req.body.status;
+  const theIssue = ISSUES.find((i) => i.id === issueId);
+  if (!theIssue) {
+    res.status(404).json({
+      message: "invalid issue",
+    });
+  }
+  theIssue.status = status;
+  res.status(200);
+});
+
 //token, boardId,
-app.get("/issues", authMiddleware, (req, res) => {
-  const userId = req.userId;
-  const boardId = Number(req.query?.boardId);
-  if (!boardId) {
-    res.status(404).json({
-      Message: "Missing board Id ",
-    });
-  }
-
-  const orgId = BOARDS.find((b) => b.id === boardId).orgId;
-
-  const organization = ORGANIZATIONS.find((o) => o.id === orgId);
-
-  const verifyUser =
-    organization.admin === userId || organization.members?.includes(userId);
-
-  if (!verifyUser) {
-    res.status(404).json({
-      message: "User isn't admin or member of the org to fetch issues",
-    });
-    return;
-  }
-
+app.get("/issues", authMiddleware, auth4MiddleWare, (req, res) => {
+  const boardId = req.boardId;
   const issues = ISSUES.filter((issue) => {
     return issue.boardId === boardId;
   });
 
   res.status(200).json({
     issues,
+  });
+});
+
+app.delete("/issue", authMiddleware, auth5MiddleWare, (req, res) => {
+  const issueId = req.issueId;
+  console.log(issueId);
+
+  const kept = ISSUES.filter((i) => i.id != issueId);
+  ISSUES.length = 0;
+  ISSUES.push(...kept);
+  // console.log(ISSUES);
+  res.status(200).json({
+    ISSUES,
   });
 });
 
