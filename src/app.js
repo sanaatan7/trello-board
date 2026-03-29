@@ -2,7 +2,7 @@ const express = require("express");
 const jwt = require("jsonwebtoken");
 const path = require("path");
 const { USERS, ORGANIZATIONS, BOARDS } = require("./db/inMemoryDb.js");
-let {ISSUES} = require("./db/inMemoryDb.js")
+let { ISSUES } = require("./db/inMemoryDb.js");
 const {
   authMiddleware,
   auth2Middleware,
@@ -38,7 +38,6 @@ app.post("/signup", (req, res) => {
   USERS.push({ id, userName, password });
   res.status(200).json({
     message: "Successfully signup!!",
-    USERS,
   });
 });
 
@@ -80,7 +79,6 @@ app.post("/organization", authMiddleware, (req, res) => {
   ORGANIZATIONS.push({ id, orgTitle, description, admin, members });
   res.status(200).json({
     message: "Org created successfully!!",
-    ORGANIZATIONS,
     id: orgCount - 1,
   });
 });
@@ -143,8 +141,6 @@ app.post("/issue", authMiddleware, auth4MiddleWare, (req, res) => {
 
   res.status(200).json({
     message: "Issue is created successfully",
-    BOARDS,
-    ISSUES,
   });
 });
 
@@ -183,9 +179,7 @@ app.delete("/issue", authMiddleware, auth5MiddleWare, (req, res) => {
   ISSUES.length = 0;
   ISSUES.push(...kept);
   // console.log(ISSUES);
-  res.status(200).json({
-    ISSUES,
-  });
+  res.status(200).json({});
 });
 
 app.get("/org-info", authMiddleware, (req, res) => {
@@ -200,7 +194,7 @@ app.get("/org-info", authMiddleware, (req, res) => {
 
 //Delete
 // token, memberUserName, orgId
-app.delete("/remove-member", authMiddleware, auth2Middleware, (req, res) => {
+app.patch("/remove-member", authMiddleware, auth2Middleware, (req, res) => {
   const isMember = req.isMember;
   const organization = req.org;
   const memberUserId = req.memberUserId;
@@ -211,6 +205,9 @@ app.delete("/remove-member", authMiddleware, auth2Middleware, (req, res) => {
     return;
   }
   organization.members = organization.members.filter((m) => m != memberUserId);
+  res.status(200).json({
+    message: `member with id:  ${memberUserId} removed`,
+  });
 });
 
 app.get("/", (req, res) => {

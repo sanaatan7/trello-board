@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken");
-const { USERS, ORGANIZATIONS } = require("./db/inMemoryDb");
+const { USERS, ORGANIZATIONS, BOARDS, ISSUES } = require("./db/inMemoryDb");
 
 function authMiddleware(req, res, next) {
   const token = req.headers?.authorization;
@@ -24,7 +24,7 @@ function authMiddleware(req, res, next) {
 
 function auth2Middleware(req, res, next) {
   const userId = req.userId;
-  const orgId = req.body.orgId;
+  const orgId = Number(req.body.orgId);
   const memberUserName = req.body.memberUserName;
 
   const organization = ORGANIZATIONS.find((u) => u.id === orgId);
@@ -44,7 +44,6 @@ function auth2Middleware(req, res, next) {
   }
 
   const memberExist = organization.members.includes(memberUser.id);
-  console.log(memberExist);
   req.isMember = memberExist;
   req.org = organization;
   req.memberUserId = memberUser.id;
@@ -55,13 +54,13 @@ function auth3Middleware(req, res, next) {
   const userId = req.userId;
   const orgId = Number(req.headers.orgid);
   // console.log(orgId);
-  
+
   const theOrganization = ORGANIZATIONS.find((o) => o.id === orgId);
 
   if (!theOrganization) {
     res.status(404).json({
       message: "ORganization isn't exists",
-      orgId
+      orgId,
     });
     return;
   }
@@ -79,4 +78,78 @@ function auth3Middleware(req, res, next) {
   req.orgId = orgId;
   next();
 }
-module.exports = { auth2Middleware, authMiddleware, auth3Middleware };
+
+const auth4MiddleWare = (req, res, next) => {
+  const boardId = Number(req.query?.boardId);
+  const userId = req.userId;
+  const findBoard = BOARDS.find((b) => b.id === boardId);
+  if (!findBoard) {
+    res.status(404).json({
+      message: "Board doesn't exists",
+    });
+    return;
+  }
+
+  const boardOrg = ORGANIZATIONS.find((o) => o.id === findBoard.orgId);
+  if (!boardOrg) {
+    res.status(404).json({
+      message: "Invalid Organization",
+    });
+    return;
+  }
+  const isUserOrAdmin =
+    boardOrg.admin === userId || boardOrg.members.includes(userId);
+
+  if (!isUserOrAdmin) {
+    res.status(404).json({
+      message: "Not an user or admin of the org",
+    });
+    return;
+  }
+
+  req.boardId = boardId;
+  next();
+};
+
+function auth5MiddleWare(req, res, next) {
+  const userId = req.userId;
+  const issueId = Number(req.query.issueId);
+  // const theIssue = ISSUES.find((i) => i.id === issueId);
+  // const theBoard = theIssue.boardId
+  const findBoard = BOARDS.find(
+    (b) => b.id === ISSUES.find((i) => i.id === issueId)?.boardId,
+  );
+  if (!findBoard) {
+    res.status(404).json({
+      message: "Board doesn't exists",
+    });
+    return;
+  }
+
+  const boardOrg = ORGANIZATIONS.find((o) => o.id === findBoard.orgId);
+  if (!boardOrg) {
+    res.status(404).json({
+      message: "Invalid Organization",
+    });
+    return;
+  }
+  const isUserOrAdmin = boardOrg.admin === userId;
+
+  if (!isUserOrAdmin) {
+    res.status(404).json({
+      message: "Not an admin of the org",
+    });
+    return;
+  }
+
+  req.issueId = issueId;
+  next();
+}
+
+module.exports = {
+  auth2Middleware,
+  authMiddleware,
+  auth3Middleware,
+  auth4MiddleWare,
+  auth5MiddleWare,
+};
