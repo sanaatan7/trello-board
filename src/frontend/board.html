@@ -3,338 +3,483 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Board</title>
+    <title>Board — TaskFlow</title>
+    <meta
+      name="description"
+      content="View and manage your boards in this organization."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Funnel+Display:wght@300..800&display=swap"
+      rel="stylesheet"
+    />
     <script src="https://unpkg.com/axios@1.13.2/dist/axios.min.js"></script>
     <style>
-      * {
+      *,
+      *::before,
+      *::after {
         margin: 0;
         padding: 0;
         box-sizing: border-box;
       }
+
       html,
       body {
         height: 100%;
         width: 100%;
+        font-family: "Inter", sans-serif;
+        background: #f8f8f8;
+        color: #000;
+        -webkit-font-smoothing: antialiased;
       }
-      .board {
-        height: 7vw;
-        width: 18vw;
-        background-color: lightcoral;
-        border-radius: 15px;
-        text-align: center;
-        align-content: center;
-        font-size: large;
-        font-weight: bold;
-        font-family: funnel display;
+
+      /* ── Header ── */
+      #board-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: 66px;
+        width: 100%;
+        background: #000;
+        color: #fff;
+        padding: 0 28px;
+        border-bottom: 1px solid #000;
+        position: sticky;
+        top: 0;
+        z-index: 50;
+      }
+
+      #board-header h1 {
+        font-family: "Funnel Display", sans-serif;
+        font-size: 1rem;
+        font-weight: 800;
+        color: #fff;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      #options {
+        display: flex;
+        gap: 8px;
+      }
+      #options button {
+        padding: 8px 18px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        font-family: "Inter", sans-serif;
+        border-radius: 8px;
         cursor: pointer;
+        transition: all 0.18s ease;
+        letter-spacing: 0.02em;
+      }
+
+      #add-b3 {
+        background: transparent;
+        color: #aaa;
+        border: 1px solid #333;
+      }
+      #add-b3:hover {
+        border-color: #fff;
+        color: #fff;
+        background: #111;
+      }
+
+      #add-b1 {
+        background: #fff;
+        color: #000;
+        border: none;
+      }
+      #add-b1:hover {
+        background: #e0e0e0;
+        transform: translateY(-1px);
+      }
+
+      /* ── Boards container ── */
+      #boards-container {
+        width: 100%;
+        padding: 36px 32px;
+        height: 92.5%;
+        background: #f8f8f8;
+        display: flex;
+        flex-shrink: 0;
+        align-items: flex-start;
+        justify-content: flex-start;
+        gap: 10px;
+      }
+
+      /* Section labels injected by JS */
+      .boards-section-label {
+        width: 100%;
+        font-size: 0.65rem;
+        font-weight: 700;
+        color: #bbb;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        margin-bottom: -6px;
+      }
+
+      .board {
+        height: 140px;
+        width: 220px;
+        background: #fff;
+        border: 1px solid #e0e0e0;
+        border-radius: 16px;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        padding: 20px;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .board::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: #000;
+        border-radius: 16px 16px 0 0;
+        transform: scaleX(0);
+        transform-origin: left;
+        transition: transform 0.25s ease;
+      }
+      .board:hover {
+        border-color: #000;
+        transform: translateY(-4px);
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+      }
+      .board:hover::before {
+        transform: scaleX(1);
+      }
+
+      .board-meta {
+        font-size: 0.66rem;
+        font-weight: 600;
+        color: #bbb;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        margin-bottom: 5px;
+      }
+      .board-title {
+        font-size: 0.92rem;
+        font-weight: 700;
+        color: #000;
+        letter-spacing: -0.01em;
+      }
+
+      .board-num {
+        position: absolute;
+        top: 16px;
+        right: 18px;
+        font-family: "Funnel Display", sans-serif;
+        font-size: 3rem;
+        font-weight: 900;
+        color: #f4f4f4;
+        line-height: 1;
+        letter-spacing: -0.05em;
+        user-select: none;
+      }
+
+      /* ── Modal backdrop ── */
+      #add-member,
+      #add-board {
+        position: fixed;
+        inset: 0;
+        height: 100%;
+        width: 100%;
+        backdrop-filter: blur(8px) brightness(0.6);
+        background: rgba(0, 0, 0, 0.5);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 200;
+        animation: fadeIn 0.18s ease;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+
+      /* ── Modal card ── */
+      #add-member > div,
+      #add-board > div {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        background: #fff;
+        width: min(440px, 90vw);
+        padding: 36px 32px;
+        border-radius: 18px;
+        box-shadow: 0 32px 80px rgba(0, 0, 0, 0.25);
+        text-align: left;
+        border-top: 3px solid #000;
+        animation: slideUp 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+      }
+      @keyframes slideUp {
+        from {
+          transform: translateY(20px);
+          opacity: 0;
+        }
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+
+      #add-member > div h3,
+      #add-board > div h3 {
+        font-family: "Funnel Display", sans-serif;
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: #000;
+        letter-spacing: -0.03em;
+        margin: 0;
+      }
+      .modal-sub {
+        font-size: 0.82rem;
+        color: #888;
+        margin-top: -6px;
+      }
+
+      #add-member > div input,
+      #add-board > div input {
+        padding: 13px 16px;
+        font-size: 0.92rem;
+        font-family: "Inter", sans-serif;
+        width: 100%;
+        background: #f8f8f8;
+        border: 1px solid #e0e0e0;
+        border-radius: 10px;
+        color: #000;
+        outline: none;
+        transition: all 0.2s ease;
+      }
+      #add-member > div input::placeholder,
+      #add-board > div input::placeholder {
+        color: #bbb;
+      }
+      #add-member > div input:focus,
+      #add-board > div input:focus {
+        border-color: #000;
+        background: #fff;
+        box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.06);
+      }
+
+      #add-b2,
+      #add-member-submit,
+      #add-member-delete {
+        padding: 12px 22px;
+        font-size: 0.82rem;
+        font-family: "Inter", sans-serif;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        border-radius: 9px;
+        cursor: pointer;
+        transition: all 0.18s ease;
+        min-width: 110px;
+      }
+      #add-b2 {
+        background: #000;
+        color: #fff;
+        border: none;
+        align-self: flex-end;
+      }
+      #add-b2:hover {
+        background: #222;
+        transform: translateY(-1px);
+      }
+      #add-member-submit {
+        background: #000;
+        color: #fff;
+        border: none;
+      }
+      #add-member-submit:hover {
+        background: #222;
+        transform: translateY(-1px);
+      }
+      #add-member-delete {
+        background: #fff;
+        color: #888;
+        border: 1px solid #e0e0e0;
+      }
+      #add-member-delete:hover {
+        border-color: #000;
+        color: #000;
       }
 
       .ujala {
         display: flex;
       }
+      .modal-actions {
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
+      }
     </style>
   </head>
-
   <body>
-    <header
-      id="board-header"
-      style="
-        display: flex;
-        align-items: center;
-        justify-content: space-around;
-        height: 50px;
-        width: 100%;
-      "
-    >
+    <header id="board-header">
       <h1
         style="
-          text-align: center;
+          font-size: 30px;
+          margin-left: 30%;
           font-weight: bolder;
           font-family: funnel display;
           text-transform: uppercase;
           display: inline-block;
         "
       ></h1>
-      <div id="options" style="display: flex; gap: 10px">
-        <button
-          id="add-b3"
-          style="
-            background-color: lightgreen;
-            font-weight: bolder;
-            padding: 10px 13px;
-            border-radius: 15px;
-            border: none;
-            cursor: pointer;
-            font-size: large;
-          "
-        >
-          Add members To Organization
-        </button>
-        <button
-          id="add-b1"
-          style="
-            background-color: lightgreen;
-            font-weight: bolder;
-            padding: 10px 13px;
-            border-radius: 15px;
-            border: none;
-            cursor: pointer;
-            font-size: large;
-          "
-        >
-          Create board
-        </button>
+      <div id="options" style="display: flex; gap: 8px">
+        <button id="add-b3">Add Members</button>
+        <button id="add-b1">+ New Board</button>
       </div>
     </header>
-    <hr />
+    <hr style="border: none; border-top: 1px solid #e8e8e8" />
 
     <div
       id="boards-container"
       style="
         width: 100%;
         padding: 10px 30px;
-        height: 94%;
-        background-color: lightblue;
+        background-color: #f8f8f8;
         display: flex;
         align-items: flex-start;
         justify-content: flex-start;
         gap: 10px;
+        flex-wrap: wrap;
       "
     ></div>
+
+    <!-- Add Member Modal -->
     <div
       id="add-member"
       style="
-        position: absolute;
-        top: 0%;
-        left: 0%;
+        position: fixed;
+        top: 0;
+        left: 0;
         align-content: center;
         text-align: center;
         height: 100%;
         width: 100%;
-        backdrop-filter: blur(4px);
+        backdrop-filter: blur(8px);
         display: none;
         align-items: center;
         justify-content: center;
       "
     >
-      <div
-        style="
-          display: flex;
-          align-items: stretch;
-          justify-content: center;
-          flex-direction: column;
-          gap: 28px;
-          background: #ffffff;
-          width: min(420px, 90vw);
-          padding: 40px 36px;
-          border-radius: 16px;
-          box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
-        "
-      >
+      <div>
         <h3
           style="
-            font-family:
-              &quot;Segoe UI&quot;,
-              system-ui,
-              -apple-system,
-              sans-serif;
-            font-size: 1.15rem;
-            font-weight: 600;
-            color: #1a1a2e;
-            letter-spacing: -0.01em;
+            font-family: &quot;Funnel Display&quot;, sans-serif;
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #000;
+            letter-spacing: -0.03em;
             margin: 0;
           "
         >
-          add Member
+          Add Member
         </h3>
-
+        <p class="modal-sub">Invite someone to this organization</p>
         <input
           style="
-            padding: 12px 0;
-            font-size: 1rem;
-            font-family:
-              &quot;Segoe UI&quot;,
-              system-ui,
-              -apple-system,
-              sans-serif;
+            padding: 13px 16px;
+            font-size: 0.92rem;
+            font-family: &quot;Inter&quot;, sans-serif;
             width: 100%;
-            border: none;
-            border-bottom: 2px solid #e0e0e0;
+            background: #f8f8f8;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            color: #000;
             outline: none;
-            background: transparent;
-            color: #1a1a2e;
-            transition: border-color 0.2s ease;
+            transition: all 0.2s;
           "
           type="text"
-          placeholder="Search user id"
-          onfocus="this.style.borderBottomColor = '#1a1a2e'"
-          onblur="this.style.borderBottomColor = '#e0e0e0'"
+          placeholder="Username"
+          onfocus="
+            this.style.borderColor = '#000';
+            this.style.boxShadow = '0 0 0 3px rgba(0,0,0,0.06)';
+          "
+          onblur="
+            this.style.borderColor = '#e0e0e0';
+            this.style.boxShadow = 'none';
+          "
         />
-
-        <button
-          id="add-member-submit"
-          type="button"
-          style="
-            padding: 12px 24px;
-            font-size: 0.875rem;
-            font-family:
-              &quot;Segoe UI&quot;,
-              system-ui,
-              -apple-system,
-              sans-serif;
-            font-weight: 600;
-            letter-spacing: 0.04em;
-            text-transform: uppercase;
-            border-radius: 8px;
-            border: none;
-            cursor: pointer;
-            background: #1a1a2e;
-            color: #ffffff;
-            transition:
-              background 0.2s ease,
-              transform 0.1s ease;
-            align-self: center;
-          "
-          onmouseover="this.style.background = '#16213e'"
-          onmouseout="this.style.background = '#1a1a2e'"
-          onmousedown="this.style.transform = 'scale(0.97)'"
-          onmouseup="this.style.transform = 'scale(1)'"
-        >
-          ADD
-        </button>
-        <button
-          id="add-member-delete"
-          type="button"
-          style="
-            padding: 12px 24px;
-            font-size: 0.875rem;
-            font-family:
-              &quot;Segoe UI&quot;,
-              system-ui,
-              -apple-system,
-              sans-serif;
-            font-weight: 600;
-            letter-spacing: 0.04em;
-            text-transform: uppercase;
-            border-radius: 8px;
-            border: none;
-            cursor: pointer;
-            background: #1a1a2e;
-            color: #ffffff;
-            transition:
-              background 0.2s ease,
-              transform 0.1s ease;
-            align-self: center;
-          "
-          onmouseover="this.style.background = '#16213e'"
-          onmouseout="this.style.background = '#1a1a2e'"
-          onmousedown="this.style.transform = 'scale(0.97)'"
-          onmouseup="this.style.transform = 'scale(1)'"
-        >
-          DELETE
-        </button>
+        <div class="modal-actions">
+          <button id="add-member-delete" type="button">Remove</button>
+          <button id="add-member-submit" type="button">Add →</button>
+        </div>
       </div>
     </div>
+
+    <!-- Add Board Modal -->
     <div
       id="add-board"
       style="
-        position: absolute;
-        top: 0%;
-        left: 0%;
+        position: fixed;
+        top: 0;
+        left: 0;
         align-content: center;
         text-align: center;
         height: 100%;
         width: 100%;
-        backdrop-filter: blur(4px);
+        backdrop-filter: blur(8px);
         display: none;
         align-items: center;
         justify-content: center;
       "
     >
-      <div
-        style="
-          display: flex;
-          align-items: stretch;
-          justify-content: center;
-          flex-direction: column;
-          gap: 28px;
-          background: #ffffff;
-          width: min(420px, 90vw);
-          padding: 40px 36px;
-          border-radius: 16px;
-          box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
-        "
-      >
+      <div>
         <h3
           style="
-            font-family:
-              &quot;Segoe UI&quot;,
-              system-ui,
-              -apple-system,
-              sans-serif;
-            font-size: 1.15rem;
-            font-weight: 600;
-            color: #1a1a2e;
-            letter-spacing: -0.01em;
+            font-family: &quot;Funnel Display&quot;, sans-serif;
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #000;
+            letter-spacing: -0.03em;
             margin: 0;
           "
         >
           New Board
         </h3>
-
+        <p class="modal-sub">Give your board a clear name</p>
         <input
           style="
-            padding: 12px 0;
-            font-size: 1rem;
-            font-family:
-              &quot;Segoe UI&quot;,
-              system-ui,
-              -apple-system,
-              sans-serif;
+            padding: 13px 16px;
+            font-size: 0.92rem;
+            font-family: &quot;Inter&quot;, sans-serif;
             width: 100%;
-            border: none;
-            border-bottom: 2px solid #e0e0e0;
+            background: #f8f8f8;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            color: #000;
             outline: none;
-            background: transparent;
-            color: #1a1a2e;
-            transition: border-color 0.2s ease;
+            transition: all 0.2s;
           "
           type="text"
-          placeholder="Enter board title"
-          onfocus="this.style.borderBottomColor = '#1a1a2e'"
-          onblur="this.style.borderBottomColor = '#e0e0e0'"
-        />
-
-        <button
-          id="add-b2"
-          style="
-            padding: 12px 24px;
-            font-size: 0.875rem;
-            font-family:
-              &quot;Segoe UI&quot;,
-              system-ui,
-              -apple-system,
-              sans-serif;
-            font-weight: 600;
-            letter-spacing: 0.04em;
-            text-transform: uppercase;
-            border-radius: 8px;
-            border: none;
-            cursor: pointer;
-            background: #1a1a2e;
-            color: #ffffff;
-            transition:
-              background 0.2s ease,
-              transform 0.1s ease;
-            align-self: flex-end;
+          placeholder="e.g. Sprint 12, Design System…"
+          onfocus="
+            this.style.borderColor = '#000';
+            this.style.boxShadow = '0 0 0 3px rgba(0,0,0,0.06)';
           "
-          onmouseover="this.style.background = '#16213e'"
-          onmouseout="this.style.background = '#1a1a2e'"
-          onmousedown="this.style.transform = 'scale(0.97)'"
-          onmouseup="this.style.transform = 'scale(1)'"
-        >
-          Create
-        </button>
+          onblur="
+            this.style.borderColor = '#e0e0e0';
+            this.style.boxShadow = 'none';
+          "
+        />
+        <button id="add-b2">Create →</button>
       </div>
     </div>
 
@@ -349,11 +494,11 @@
       const addMemberBtn = document.getElementById("add-b3");
       const addMemberForm = document.getElementById("add-member");
 
+      boardContainer.style.backgroundColor = "#f8f8f8";
+
       const setBoardTitle = () => {
         const orgTitle = localStorage.getItem("boardTitle") || "Board";
-        if (header) {
-          header.textContent = orgTitle;
-        }
+        if (header) header.textContent = orgTitle;
       };
 
       const getAllBoards = async () => {
@@ -365,18 +510,18 @@
               "Content-Type": "application/json",
             },
           });
-
           const boards = response.data.boards;
-          if (!boardContainer) {
-            console.error("boards-container not found in DOM");
-            return;
-          }
-
-          boards.forEach((board) => {
+          console.log(boards);
+          if (!boardContainer) return;
+          boards.forEach((board, i) => {
             const div = document.createElement("div");
             div.classList.add("board");
-            div.id = String(board.id ?? "");
-            div.textContent = board.title ?? "Untitled Board";
+            div.id = board._id.toString() ?? "";
+            console.log(board._id.toString());
+            div.innerHTML = `
+              <div class="board-num">${String(i + 1).padStart(2, "0")}</div>
+              <div class="board-meta">Board</div>
+              <div class="board-title">${board.title ?? "Untitled Board"}</div>`;
             boardContainer.appendChild(div);
           });
           openIssues();
@@ -386,14 +531,13 @@
       };
 
       const openIssues = () => {
-        const boards = boardContainer.querySelectorAll(".board");
-        if (!boards) return;
-        boards.forEach((board) => {
+        boardContainer.querySelectorAll(".board").forEach((board) => {
           board.addEventListener("click", () => {
-            console.log("clicked");
-
             localStorage.setItem("boardId", board.id);
-            localStorage.setItem("boardTitle", board.innerText);
+            localStorage.setItem(
+              "boardTitle",
+              board.querySelector(".board-title").innerText,
+            );
             window.location.href = "/issue";
           });
         });
@@ -408,22 +552,15 @@
         try {
           const response = await axios.patch(
             "/remove-member",
-            {
-              memberUserName,
-              orgId,
-            },
-            {
-              headers: {
-                Authorization: token,
-              },
-            },
+            { memberUserName, orgId },
+            { headers: { Authorization: token } },
           );
           if (response.status === 200) {
             addMemberForm.querySelector("input").value = "";
             addMemberForm.style.display = "none";
           }
         } catch (error) {
-          console.error("Failed to delete member:", error);
+          console.error(error);
         }
       };
 
@@ -435,31 +572,21 @@
       addMemberBtn.addEventListener("click", () => {
         addMemberForm.style.display = "flex";
       });
+
       addButton.addEventListener("click", async () => {
         const title = addBoardDiv.querySelector("input")?.value.trim();
-        console.log(title);
-
-        if (title === "") return;
+        if (!title) return;
         try {
-          const response = await axios.post(
+          await axios.post(
             "/board",
-            {
-              title,
-            },
-            {
-              headers: {
-                Authorization: token,
-                orgId,
-              },
-            },
+            { title },
+            { headers: { Authorization: token, orgId } },
           );
-
-          console.log(response.data);
           boardContainer.innerHTML = "";
           addBoardDiv.style.display = "none";
           getAllBoards();
         } catch (error) {
-          console.error("Failed to create board:", error);
+          console.error(error);
         }
       });
 
@@ -474,31 +601,28 @@
           try {
             const response = await axios.post(
               "/add-member-to-organization",
-              {
-                memberUserName,
-                orgId,
-              },
-              {
-                headers: {
-                  Authorization: token,
-                },
-              },
+              { memberUserName, orgId },
+              { headers: { Authorization: token } },
             );
             if (response.status === 200) {
               addMemberForm.querySelector("input").value = "";
               addMemberForm.style.display = "none";
             }
           } catch (error) {
-            console.error("Failed to add member:", error);
+            console.error(error);
           }
         });
-        const deleteMemberSubmit = document.getElementById("add-member-delete");
-        if (deleteMemberSubmit) {
-          deleteMemberSubmit.addEventListener("click", async () => {
-            memberDeleteEvent();
-          });
-        }
+        document
+          .getElementById("add-member-delete")
+          ?.addEventListener("click", memberDeleteEvent);
       }
+
+      // Close modals on backdrop click
+      [addBoardDiv, addMemberForm].forEach((m) =>
+        m.addEventListener("click", (e) => {
+          if (e.target === m) m.style.display = "none";
+        }),
+      );
     </script>
   </body>
 </html>

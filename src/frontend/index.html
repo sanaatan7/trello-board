@@ -3,138 +3,221 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SignUp</title>
+    <title>SignUp — TaskFlow</title>
+    <meta name="description" content="Create your account and start managing your projects with TaskFlow." />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Funnel+Display:wght@300..800&display=swap"
-      rel="stylesheet"
-    />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Funnel+Display:wght@300..800&display=swap" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <style>
-      * {
-        padding: 0;
-        margin: 0;
-        box-sizing: border-box;
+      *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+      html, body {
+        height: 100%; width: 100%;
+        font-family: 'Inter', sans-serif;
+        background: #000;
+        color: #fff;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
       }
-      html,
-      body {
-        height: 100%;
-        width: 100%;
-      }
+      body { display: flex; }
+
+      /* ── Left: form ── */
       #left {
-        height: 100%;
-        width: 50%;
-        overflow: hidden;
-      }
-      #left img {
-        height: 100%;
-        width: 100%;
-        object-fit: cover;
+        width: 50%; height: 100%;
+        display: flex; flex-direction: column;
+        justify-content: center; align-items: flex-start;
+        padding: 80px 72px;
+        background: #000;
+        border-right: 1px solid #1a1a1a;
+        position: relative; overflow: hidden;
       }
 
+      /* Subtle noise grain overlay */
+      #left::after {
+        content: '';
+        position: absolute; inset: 0; pointer-events: none;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+        opacity: 0.6;
+      }
+
+      .brand {
+        font-family: 'Funnel Display', sans-serif;
+        font-size: 1rem; font-weight: 800;
+        color: #fff; margin-bottom: 80px;
+        letter-spacing: 0.08em; text-transform: uppercase;
+        display: flex; align-items: center; gap: 10px;
+        position: relative; z-index: 1;
+      }
+      .brand-mark {
+        width: 26px; height: 26px; background: #fff;
+        border-radius: 6px; display: flex; align-items: center; justify-content: center;
+      }
+      .brand-mark svg { width: 13px; height: 13px; }
+
+      #left h1 {
+        font-family: 'Funnel Display', sans-serif;
+        font-size: 4.5rem; font-weight: 800;
+        line-height: 0.95; letter-spacing: -0.04em;
+        margin-bottom: 20px; color: #fff;
+        position: relative; z-index: 1;
+      }
+
+      .form-subtitle {
+        font-size: 0.9rem; color: #555;
+        margin-bottom: 52px; line-height: 1.6;
+        font-weight: 400; position: relative; z-index: 1;
+      }
+
+      .field { width: 100%; max-width: 400px; margin-bottom: 12px; position: relative; z-index: 1; }
+      .field-label {
+        display: block; font-size: 0.68rem; font-weight: 700;
+        color: #444; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 8px;
+      }
+
+      #left input {
+        width: 100%; padding: 14px 16px;
+        font-size: 0.92rem; font-family: 'Inter', sans-serif;
+        background: #0d0d0d; border: 1px solid #222;
+        border-radius: 10px; color: #fff; outline: none;
+        transition: all 0.2s ease;
+      }
+      #left input::placeholder { color: #333; }
+      #left input:focus { border-color: #fff; background: #111; box-shadow: 0 0 0 3px rgba(255,255,255,0.06); }
+
+      #left button {
+        width: 100%; max-width: 400px; margin-top: 10px;
+        padding: 15px; font-size: 0.92rem; font-weight: 700;
+        font-family: 'Inter', sans-serif; letter-spacing: 0.04em;
+        border: none; border-radius: 10px; cursor: pointer;
+        background: #fff; color: #000;
+        transition: all 0.2s ease; position: relative; z-index: 1;
+      }
+      #left button:hover { background: #e8e8e8; transform: translateY(-1px); }
+      #left button:active { transform: translateY(0); background: #d0d0d0; }
+
+      #left p {
+        font-size: 0.83rem; color: #444; margin-top: 22px;
+        position: relative; z-index: 1;
+      }
+      #left p a { color: #fff; text-decoration: none; font-weight: 600; border-bottom: 1px solid #333; padding-bottom: 1px; transition: border-color 0.2s; }
+      #left p a:hover { border-color: #fff; }
+
+      /* ── Right: editorial ── */
       #right {
-        height: 100%;
-        width: 50%;
-        overflow: hidden;
-        background: linear-gradient(135deg, #0f0000 0%, #050505 100%);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 20px;
-        color: #fff;
-        font-family: "Funnel Display", sans-serif;
+        width: 50%; height: 100%;
+        background: #fff;
+        display: flex; flex-direction: column;
+        justify-content: flex-end; align-items: flex-start;
+        padding: 72px; position: relative; overflow: hidden;
       }
 
-      #right h1 {
-        margin-bottom: 70px;
-        font-size: 80px;
-        font-weight: 700;
-        color: #eab000;
-        text-shadow: 2px 2px 10px rgba(158, 26, 26, 0.4);
+      /* Big background number */
+      .bg-number {
+        position: absolute; bottom: -40px; right: -20px;
+        font-family: 'Funnel Display', sans-serif;
+        font-size: 38vw; font-weight: 900;
+        color: #f0f0f0; line-height: 0.8;
+        letter-spacing: -0.05em; pointer-events: none;
+        user-select: none;
       }
 
-      #right input {
-        width: 320px;
-        padding: 12px 18px;
-        font-size: 18px;
-        outline: none;
-        border-radius: 8px;
-        border: 2px solid #333;
-        background: rgba(40, 40, 40, 0.7);
-        color: #fff;
-        transition: all 0.3s ease;
+      .right-eyebrow {
+        font-size: 0.68rem; font-weight: 700; color: #999;
+        text-transform: uppercase; letter-spacing: 0.14em;
+        margin-bottom: 20px; position: relative; z-index: 1;
+        display: flex; align-items: center; gap: 10px;
+      }
+      .right-eyebrow::before { content: ''; display: inline-block; width: 24px; height: 1px; background: #999; }
+
+      .right-headline {
+        font-family: 'Funnel Display', sans-serif;
+        font-size: 3rem; font-weight: 800; color: #000;
+        letter-spacing: -0.04em; line-height: 1.05;
+        max-width: 380px; margin-bottom: 28px;
+        position: relative; z-index: 1;
       }
 
-      #right input:focus {
-        border-color: #9e1a1a;
-        background: rgba(60, 20, 20, 0.7);
-        box-shadow: 0 0 15px rgba(158, 26, 26, 0.3);
+      .right-body {
+        font-size: 0.9rem; color: #666; line-height: 1.7;
+        max-width: 340px; margin-bottom: 40px;
+        position: relative; z-index: 1;
       }
 
-      #right button {
-        margin-top: 10px;
-        padding: 12px 40px;
-        font-size: 20px;
-        font-weight: 600;
-        cursor: pointer;
-        border: none;
-        border-radius: 8px;
-        background: #9e1a1a;
-        color: #fff;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+      .right-tags { display: flex; gap: 8px; flex-wrap: wrap; position: relative; z-index: 1; }
+      .tag {
+        padding: 6px 14px; border-radius: 100px;
+        border: 1px solid #ddd; font-size: 0.76rem; font-weight: 600;
+        color: #444; letter-spacing: 0.02em; transition: all 0.2s;
       }
+      .tag:hover { background: #000; color: #fff; border-color: #000; }
 
-      #right button:hover {
-        background: #c42121;
-        color: #eab000;
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(234, 176, 0, 0.2);
+      .left-dots {
+        position: absolute; top: 72px; right: 72px;
+        display: flex; gap: 6px; z-index: 1;
       }
-
-      #right button:active {
-        transform: translateY(0);
+      .left-dots span {
+        width: 6px; height: 6px; border-radius: 50%; background: #ccc;
       }
-
-      #right input::placeholder {
-        color: #888;
-      }
+      .left-dots span.active { background: #000; width: 20px; border-radius: 3px; }
     </style>
   </head>
-  <body style="display: flex">
-    <div id="left"><img src="./img1.jpg" alt="img" /></div>
-    <div id="right">
-      <h1>Wellcome,</h1>
-      <input type="text" placeholder="Enter user name" id="nameInput" />
-      <input type="password" placeholder="Enter password" id="passinput" />
-      <button>SignUp</button>
+  <body>
+    <!-- Left: form -->
+    <div id="left">
+      <div class="brand">
+        <div class="brand-mark">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5" stroke-linecap="round">
+            <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2M9 12h6M9 16h4"/>
+          </svg>
+        </div>
+        TaskFlow
+      </div>
 
-      <p>already have an account? <a href="/signin">Sign in</a></p>
+      <h1>Create<br/>account.</h1>
+      <p class="form-subtitle">Join your team and start shipping faster.</p>
+
+      <div class="field">
+        <label class="field-label">Username</label>
+        <input type="text" placeholder="yourname" id="nameInput" autocomplete="off" />
+      </div>
+      <div class="field">
+        <label class="field-label">Password</label>
+        <input type="password" placeholder="••••••••••" id="passinput" />
+      </div>
+
+      <button>Sign up →</button>
+      <p>Already have an account? <a href="/signin">Sign in</a></p>
+    </div>
+
+    <!-- Right: editorial -->
+    <div id="right">
+      <div class="bg-number">01</div>
+      <div class="left-dots">
+        <span class="active"></span><span></span><span></span>
+      </div>
+      <span class="right-eyebrow">Productivity, reimagined</span>
+      <h2 class="right-headline">Organize work the way your team thinks.</h2>
+      <p class="right-body">Boards, issues, and real‑time updates — all in one place. Move fast without breaking things.</p>
+      <div class="right-tags">
+        <span class="tag">Kanban boards</span>
+        <span class="tag">Real-time sync</span>
+        <span class="tag">Team roles</span>
+        <span class="tag">Issue tracking</span>
+      </div>
     </div>
 
     <script>
       const nameInput = document.querySelector("#nameInput");
       const passwordInput = document.querySelector("#passinput");
-      const signupButton = document.querySelector("#right button");
-
+      const signupButton = document.querySelector("#left button");
       signupButton.addEventListener("click", async () => {
         const userName = nameInput.value.trim();
         const password = passwordInput.value.trim();
-
         console.log(userName, password);
-
-        if (!userName || !password) {
-          return;
-        }
-        const response = await axios.post("/signup", {
-          userName,
-          password,
-        });
-
-        passwordInput.value = "";
-        nameInput.value = "";
+        if (!userName || !password) return;
+        const response = await axios.post("/signup", { userName, password });
+        passwordInput.value = ""; nameInput.value = "";
       });
     </script>
   </body>

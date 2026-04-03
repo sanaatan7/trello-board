@@ -3,291 +3,595 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Issues — TaskFlow</title>
+    <meta name="description" content="View and manage issues for your board." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Funnel+Display:wght@300..800&display=swap"
+      rel="stylesheet"
+    />
     <style>
-      * {
-        padding: 0;
+      *,
+      *::before,
+      *::after {
         margin: 0;
+        padding: 0;
         box-sizing: border-box;
       }
+
       html,
       body {
         height: 100vh;
         width: 100vw;
         display: flex;
         flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        gap: 10px;
+        font-family: "Inter", sans-serif;
+        background: #f8f8f8;
+        color: #000;
+        -webkit-font-smoothing: antialiased;
+        overflow: hidden;
       }
 
-      .column {
-        background-color: lightseagreen;
-        height: 80vh;
-        width: 25vw;
-        border-radius: 20px;
+      /* ── Topbar ── */
+      .issues-topbar {
+        height: 56px;
+        flex-shrink: 0;
+        background: #000;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 24px;
+        border-bottom: 1px solid #000;
+        position: relative;
+      }
+      .issues-topbar-logo {
+        font-family: "Funnel Display", sans-serif;
+        font-size: 1rem;
+        font-weight: 800;
+        color: #fff;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .logo-mark {
+        width: 22px;
+        height: 22px;
+        background: #fff;
+        border-radius: 5px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .logo-mark svg {
+        width: 11px;
+        height: 11px;
+      }
+
+      /* ── Board title (centered in topbar) ── */
+      #header {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
         text-align: center;
+        font-family: "Funnel Display", sans-serif;
+        font-size: 0.95rem;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: #fff;
+        padding: 0;
+      }
+      #header h1 {
+        font-size: inherit;
+        font-weight: inherit;
+      }
+
+      /* ── Add Issue button ── */
+      #add-issue {
+        padding: 8px 18px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        font-family: "Inter", sans-serif;
+        border: 1px solid #333;
+        border-radius: 8px;
+        background: transparent;
+        color: #fff;
+        cursor: pointer;
+        letter-spacing: 0.04em;
+        transition: all 0.18s ease;
+        position: static;
+        z-index: 5;
+      }
+      #add-issue:hover {
+        background: #fff;
+        color: #000;
+        border-color: #fff;
+      }
+
+      /* ── Columns wrapper ── */
+      .columns-wrapper {
+        display: flex;
+        gap: 16px;
+        justify-content: center;
+        align-items: flex-start;
+        width: 100%;
+        padding: 24px 24px;
+        flex: 1;
+        overflow-x: auto;
+      }
+      .columns-wrapper::-webkit-scrollbar {
+        height: 4px;
+      }
+      .columns-wrapper::-webkit-scrollbar-thumb {
+        background: #ddd;
+        border-radius: 10px;
+      }
+
+      /* ── Column ── */
+      .column {
+        background: #fff;
+        border: 1px solid #e8e8e8;
+        height: calc(100vh - 56px - 90px);
+        width: 500px;
+        border-radius: 16px;
         display: flex;
         flex-direction: column;
+        overflow: hidden;
+        flex-shrink: 0;
+        transition: border-color 0.2s ease;
+        position: relative;
+      }
+      .column::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        border-radius: 16px 16px 0 0;
+      }
+      #todo::before {
+        background: #000;
+      }
+      #ongoing::before {
+        background: #888;
+      }
+      #done::before {
+        background: #ccc;
+      }
+
+      .column:hover {
+        border-color: #ccc;
+      }
+      .column.drag-over {
+        border-color: #000;
+        background: #fdfdfd;
       }
 
       .column-header {
-        margin-bottom: 10px;
-        padding: 10px;
-        font-size: 1.2rem;
-        font-weight: bold;
-        font-family: "Funnel Display", sans-serif;
+        padding: 16px 18px 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        border-bottom: 1px solid #f0f0f0;
+        flex-shrink: 0;
+      }
+      .col-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+      #todo .col-dot {
+        background: #000;
+      }
+      #ongoing .col-dot {
+        background: #888;
+      }
+      #done .col-dot {
+        background: #ccc;
+      }
+
+      .col-label-text {
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+      #todo .col-label-text {
+        color: #000;
+      }
+      #ongoing .col-label-text {
+        color: #555;
+      }
+      #done .col-label-text {
+        color: #aaa;
+      }
+
+      .col-count {
+        margin-left: auto;
+        font-size: 0.68rem;
+        font-weight: 600;
+        padding: 2px 8px;
+        border-radius: 20px;
+        background: #f0f0f0;
+        color: #888;
+      }
+      .column-header hr {
+        display: none;
       }
 
       .column-body {
         flex: 1;
         overflow-y: auto;
-        padding: 10px 0px;
+        padding: 10px 10px;
         display: flex;
         flex-direction: column;
-        gap: 10px;
+        gap: 7px;
         align-items: center;
-        justify-content: flex-start;
       }
       .column-body::-webkit-scrollbar {
-        display: none;
+        width: 3px;
+      }
+      .column-body::-webkit-scrollbar-thumb {
+        background: #e0e0e0;
+        border-radius: 10px;
       }
 
+      /* ── Issue card ── */
       .issue {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        width: 90%;
-        padding: 14px 18px;
-        background: #ffffff;
+        height: 60px;
+        width: 100%;
+        padding: 12px 14px;
+        background: #efefef;
+        border: 1px solid #ebebeb;
         border-radius: 10px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-        transition:
-          box-shadow 0.2s ease,
-          transform 0.15s ease;
-        cursor: pointer;
+        transition: all 0.18s ease;
+        cursor: grab;
+        position: relative;
       }
-
+      .issue::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 4px;
+        bottom: 4px;
+        width: 2px;
+        background: #e0e0e0;
+        border-radius: 2px;
+        transition: background 0.2s ease;
+      }
+      .issue:active {
+        cursor: grabbing;
+      }
       .issue:hover {
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+        border-color: #000;
+        background: #fff;
         transform: translateY(-1px);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.07);
+      }
+      .issue:hover::before {
+        background: #000;
       }
 
       .issue h3 {
-        font-family:
-          "Segoe UI",
-          system-ui,
-          -apple-system,
-          sans-serif;
-        font-size: 0.92rem;
+        font-size: 0.86rem;
         font-weight: 500;
-        color: #1a1a2e;
+        color: #000;
         letter-spacing: -0.01em;
         margin: 0;
+        flex: 1;
+        min-width: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        padding-right: 10px;
+        padding-left: 10px;
       }
 
       .issue button {
-        padding: 6px 14px;
-        font-size: 0.75rem;
-        font-family:
-          "Segoe UI",
-          system-ui,
-          -apple-system,
-          sans-serif;
-        font-weight: 600;
-        letter-spacing: 0.03em;
+        flex-shrink: 0;
+        padding: 3px 9px;
+        font-size: 0.66rem;
+        font-family: "Inter", sans-serif;
+        font-weight: 700;
+        letter-spacing: 0.06em;
         text-transform: uppercase;
-        border: 1.5px solid #e0e0e0;
-        border-radius: 6px;
+        border: 1px solid #e0e0e0;
+        border-radius: 5px;
         background: transparent;
-        color: #888;
+        color: #ccc;
         cursor: pointer;
+        transition: all 0.18s ease;
+      }
+      .issue button:hover {
+        border-color: #000;
+        color: #000;
+        background: transparent;
+      }
+
+      /* ── Add Issue Modal ── */
+      #add-issue-form {
+        display: none;
+        position: fixed;
+        inset: 0;
+        backdrop-filter: blur(8px) brightness(0.6);
+        background: rgba(0, 0, 0, 0.45);
+        align-items: center;
+        justify-content: center;
+        z-index: 200;
+        animation: fadeIn 0.18s ease;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+
+      #add-issue-form > div {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        background: #fff;
+        width: min(440px, 90vw);
+        padding: 36px 32px;
+        border-radius: 18px;
+        box-shadow: 0 32px 80px rgba(0, 0, 0, 0.22);
+        border-top: 3px solid #000;
+        text-align: left;
+        animation: slideUp 0.26s cubic-bezier(0.34, 1.56, 0.64, 1);
+      }
+      @keyframes slideUp {
+        from {
+          transform: translateY(20px);
+          opacity: 0;
+        }
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+
+      #add-issue-form h3 {
+        font-family: "Funnel Display", sans-serif;
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: #000;
+        letter-spacing: -0.03em;
+        margin: 0;
+      }
+      .modal-sub {
+        font-size: 0.82rem;
+        color: #aaa;
+        margin-top: -6px;
+      }
+
+      #add-issue-form input {
+        padding: 13px 16px;
+        font-size: 0.92rem;
+        font-family: "Inter", sans-serif;
+        width: 100%;
+        background: #f8f8f8;
+        border: 1px solid #e0e0e0;
+        border-radius: 10px;
+        color: #000;
+        outline: none;
         transition: all 0.2s ease;
       }
-
-      .issue button:hover {
-        border-color: #e74c3c;
-        color: #e74c3c;
-        background: rgba(231, 76, 60, 0.06);
+      #add-issue-form input::placeholder {
+        color: #bbb;
+      }
+      #add-issue-form input:focus {
+        border-color: #000;
+        background: #fff;
+        box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.06);
       }
 
-      .issue button:active {
-        transform: scale(0.96);
+      #add-issue-btn {
+        padding: 13px 24px;
+        font-size: 0.82rem;
+        font-family: "Inter", sans-serif;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        border-radius: 9px;
+        border: none;
+        cursor: pointer;
+        background: #000;
+        color: #fff;
+        transition: all 0.18s ease;
+        align-self: flex-end;
+        min-width: 120px;
+      }
+      #add-issue-btn:hover {
+        background: #222;
+        transform: translateY(-1px);
       }
     </style>
-    <title>Document</title>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   </head>
   <body style="position: relative">
-    <button
-      id="add-issue"
-      style="
-        position: absolute;
-        top: 1%;
-        right: 2%;
-        padding: 10px 20px;
-        font-size: 1.2rem;
-        font-weight: bold;
-        font-family: &quot;Funnel Display&quot;, sans-serif;
-        border: none;
-        border-radius: 5px;
-        background-color: #007bff;
-        color: white;
-        cursor: pointer;
-      "
-    >
-      Add Issue
-    </button>
+    <!-- Topbar -->
+    <nav class="issues-topbar">
+      <div class="issues-topbar-logo">
+        <div class="logo-mark">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#000"
+            stroke-width="2.5"
+            stroke-linecap="round"
+          >
+            <path
+              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 12h6"
+            />
+          </svg>
+        </div>
+        TaskFlow
+      </div>
 
+      <!-- Board title centered -->
+      <div
+        id="header"
+        style="
+          position: absolute;
+          left: 50%;
+          transform: translateX(-50%);
+          text-align: center;
+          font-family: &quot;Funnel Display&quot;, sans-serif;
+          font-size: 0.95rem;
+          font-weight: 800;
+          letter-spacing: 0.04em;
+          text-transform: uppercase;
+          color: #fff;
+          padding: 0;
+        "
+      >
+        <h1>Board Title</h1>
+      </div>
+
+      <!-- Add Issue button -->
+      <button
+        id="add-issue"
+        style="
+          position: static;
+          padding: 8px 18px;
+          font-size: 0.8rem;
+          font-weight: 700;
+          font-family: &quot;Inter&quot;, sans-serif;
+          border: 1px solid #333;
+          border-radius: 8px;
+          background: transparent;
+          color: #fff;
+          cursor: pointer;
+        "
+      >
+        + Add Issue
+      </button>
+    </nav>
+
+    <!-- Add Issue Modal -->
     <div
       id="add-issue-form"
       style="
         display: none;
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        backdrop-filter: blur(4px);
+        position: fixed;
+        inset: 0;
+        backdrop-filter: blur(8px);
         align-items: center;
         justify-content: center;
+        z-index: 200;
       "
     >
-      <div
-        style="
-          display: flex;
-          align-items: stretch;
-          justify-content: center;
-          flex-direction: column;
-          gap: 28px;
-          background: #ffffff;
-          width: min(420px, 90vw);
-          padding: 40px 36px;
-          border-radius: 16px;
-          box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
-        "
-      >
+      <div>
         <h3
           style="
-            font-family:
-              &quot;Segoe UI&quot;,
-              system-ui,
-              -apple-system,
-              sans-serif;
-            font-size: 1.15rem;
-            font-weight: 600;
-            color: #1a1a2e;
-            letter-spacing: -0.01em;
+            font-family: &quot;Funnel Display&quot;, sans-serif;
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #000;
+            letter-spacing: -0.03em;
             margin: 0;
           "
         >
           New Issue
         </h3>
-
+        <p class="modal-sub">Add a task to this board</p>
         <input
           style="
-            padding: 12px 0;
-            font-size: 1rem;
-            font-family:
-              &quot;Segoe UI&quot;,
-              system-ui,
-              -apple-system,
-              sans-serif;
+            padding: 13px 16px;
+            font-size: 0.92rem;
+            font-family: &quot;Inter&quot;, sans-serif;
             width: 100%;
-            border: none;
-            border-bottom: 2px solid #e0e0e0;
+            background: #f8f8f8;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            color: #000;
             outline: none;
-            background: transparent;
-            color: #1a1a2e;
-            transition: border-color 0.2s ease;
+            transition: all 0.2s;
           "
           type="text"
-          placeholder="Enter issue title"
-          onfocus="this.style.borderBottomColor = '#1a1a2e'"
-          onblur="this.style.borderBottomColor = '#e0e0e0'"
-        />
-
-        <button
-          id="add-issue-btn"
-          style="
-            padding: 12px 24px;
-            font-size: 0.875rem;
-            font-family:
-              &quot;Segoe UI&quot;,
-              system-ui,
-              -apple-system,
-              sans-serif;
-            font-weight: 600;
-            letter-spacing: 0.04em;
-            text-transform: uppercase;
-            border-radius: 8px;
-            border: none;
-            cursor: pointer;
-            background: #1a1a2e;
-            color: #ffffff;
-            transition:
-              background 0.2s ease,
-              transform 0.1s ease;
-            align-self: flex-end;
+          placeholder="e.g. Fix login redirect bug"
+          onfocus="
+            this.style.borderColor = '#000';
+            this.style.boxShadow = '0 0 0 3px rgba(0,0,0,0.06)';
+            this.style.background = '#fff';
           "
-          onmouseover="this.style.background = '#16213e'"
-          onmouseout="this.style.background = '#1a1a2e'"
-          onmousedown="this.style.transform = 'scale(0.97)'"
-          onmouseup="this.style.transform = 'scale(1)'"
-        >
-          Create
-        </button>
+          onblur="
+            this.style.borderColor = '#e0e0e0';
+            this.style.boxShadow = 'none';
+            this.style.background = '#f8f8f8';
+          "
+        />
+        <button id="add-issue-btn">Create →</button>
       </div>
     </div>
 
-    <div
-      id="header"
+    <hr
       style="
-        text-align: center;
-        font-size: 2rem;
-        font-weight: bold;
-        font-family: &quot;Funnel Display&quot;, sans-serif;
-        padding: 10px;
+        width: 100%;
+        border: 1px solid #e8e8e8;
+        border-top: none;
+        display: none;
       "
-    >
-      <h1>Board Title</h1>
-    </div>
-    <hr style="width: 100%; border: 1px solid black" />
+    />
+
+    <!-- Kanban columns -->
     <div
+      class="columns-wrapper"
       style="
         display: flex;
-        gap: 60px;
+        gap: 16px;
         justify-content: center;
-        align-items: center;
+        align-items: flex-start;
         width: 100%;
-        padding: 10px;
-        margin-top: 20px;
+        padding: 24px;
+        margin-top: 0;
       "
     >
       <div class="column" id="todo">
         <div class="column-header">
-          <h1>TODO</h1>
+          <div class="col-dot"></div>
+          <span class="col-label-text">Todo</span>
+          <span class="col-count">0</span>
           <hr />
         </div>
         <div class="column-body"></div>
       </div>
       <div class="column" id="ongoing">
         <div class="column-header">
-          <h1>Ongoing</h1>
+          <div class="col-dot"></div>
+          <span class="col-label-text">Ongoing</span>
+          <span class="col-count">0</span>
           <hr />
         </div>
         <div class="column-body"></div>
       </div>
       <div class="column" id="done">
         <div class="column-header">
-          <h1>Done</h1>
+          <div class="col-dot"></div>
+          <span class="col-label-text">Done</span>
+          <span class="col-count">0</span>
           <hr />
         </div>
         <div class="column-body"></div>
       </div>
     </div>
+
     <script>
       const header = document.querySelector("#header");
-      header.textContent = localStorage.getItem("boardTitle");
+      const titleText = localStorage.getItem("boardTitle") || "Board Title";
+      header.innerHTML = `<h1>${titleText}</h1>`;
+
       const addIssueBtn = document.querySelector("#add-issue");
       const addIssueForm = document.querySelector("#add-issue-form");
       const columns = document.querySelectorAll(".column");
@@ -296,19 +600,28 @@
       const doneCol = document.querySelector("#done");
       let draggedItem = null;
 
-      function addDeleteListener(element) {
-        const delBtn = element.querySelector("button");
-        delBtn.addEventListener("click", async (e) => {
-          const issueId = element.id;
+      function updateCounts() {
+        [todoCol, onGoingCol, doneCol].forEach((col) => {
+          col.querySelector(".col-count").textContent =
+            col.querySelectorAll(".issue").length;
+        });
+      }
 
+      function addDeleteListener(element) {
+        element.querySelector("button").addEventListener("click", async () => {
+          const issueId = element.id;
           try {
             await axios.delete("/issue", {
               params: { issueId },
-              headers: {
-                Authorization: localStorage.getItem("token"),
-              },
+              headers: { Authorization: localStorage.getItem("token") },
             });
-            element.parentElement.removeChild(element);
+            element.style.opacity = "0";
+            element.style.transform = "scale(0.95) translateY(-4px)";
+            element.style.transition = "all 0.2s ease";
+            setTimeout(() => {
+              element.parentElement?.removeChild(element);
+              updateCounts();
+            }, 200);
           } catch (error) {
             console.log(error);
           }
@@ -322,61 +635,47 @@
         issues.forEach((i) => {
           const div = document.createElement("div");
           div.classList.add("issue");
-          div.id = i.id;
+          div.id = i._id;
           div.draggable = true;
-          div.innerHTML = `
-          <h3>${i.title}</h3>
-          <button>Delete</button>
-          `;
-          if (i.status === "todo") {
-            const column = todoCol.querySelector(".column-body");
-            column.appendChild(div);
-          } else if (i.status === "ongoing") {
-            const column = onGoingCol.querySelector(".column-body");
-            column.appendChild(div);
-          } else {
-            const column = doneCol.querySelector(".column-body");
-            column.appendChild(div);
-          }
+          div.innerHTML = `<h3>${i.title}</h3><button>Del</button>`;
+          div.style.opacity = "0";
+          div.style.transform = "translateY(6px)";
+          div.style.transition = "all 0.18s ease";
+          if (i.status === "todo")
+            todoCol.querySelector(".column-body").appendChild(div);
+          else if (i.status === "ongoing")
+            onGoingCol.querySelector(".column-body").appendChild(div);
+          else doneCol.querySelector(".column-body").appendChild(div);
+          requestAnimationFrame(() => {
+            div.style.opacity = "1";
+            div.style.transform = "translateY(0)";
+          });
           dragEventsOnIssue(div);
           addDeleteListener(div);
         });
+        updateCounts();
       };
 
       const getIssues = async () => {
-        const boardId = localStorage.getItem("boardId");
-        const token = localStorage.getItem("token");
-
         try {
           const response = await axios.get("/issues", {
-            params: { boardId },
-            headers: {
-              Authorization: token,
-            },
+            params: { boardId: localStorage.getItem("boardId") },
+            headers: { Authorization: localStorage.getItem("token") },
           });
-          const issues = response.data.issues;
-          displayIssues(issues);
+          displayIssues(response.data.issues);
         } catch (error) {}
       };
 
       const addIssue = async () => {
         const title = addIssueForm.querySelector("input").value.trim();
-        if (!title || title === "") return;
-        const status = "todo";
-
+        if (!title) return;
         try {
-          const boardId = localStorage.getItem("boardId");
           await axios.post(
             "/issue",
+            { title, status: "todo" },
             {
-              title,
-              status,
-            },
-            {
-              params: { boardId },
-              headers: {
-                Authorization: localStorage.getItem("token"),
-              },
+              params: { boardId: localStorage.getItem("boardId") },
+              headers: { Authorization: localStorage.getItem("token") },
             },
           );
           addIssueForm.querySelector("input").value = "";
@@ -386,26 +685,23 @@
       };
 
       const updateStatus = async (issueId, status) => {
-        const boardId = localStorage.getItem("boardId");
-        const token = localStorage.getItem("token");
         await axios.patch(
           "/issue",
+          { issueId, status },
           {
-            issueId,
-            status,
-          },
-          {
-            params: { boardId },
-            headers: {
-              Authorization: token,
-            },
+            params: { boardId: localStorage.getItem("boardId") },
+            headers: { Authorization: localStorage.getItem("token") },
           },
         );
       };
 
       const dragEventsOnIssue = (element) => {
-        element.addEventListener("dragstart", (e) => {
+        element.addEventListener("dragstart", () => {
           draggedItem = element;
+          element.style.opacity = "0.4";
+        });
+        element.addEventListener("dragend", () => {
+          element.style.opacity = "1";
         });
       };
 
@@ -413,33 +709,35 @@
         columns.forEach((col) => {
           col.addEventListener("dragover", (e) => {
             e.preventDefault();
+            col.classList.add("drag-over");
           });
-
+          col.addEventListener("dragleave", () =>
+            col.classList.remove("drag-over"),
+          );
           col.addEventListener("drop", (e) => {
             e.preventDefault();
-            const parentElement = draggedItem.parentElement.parentElement.id;
+            col.classList.remove("drag-over");
+            if (!draggedItem) return;
             const colParent = col.id;
-            if (col === parentElement) {
-              return;
-            } else {
-              col.querySelector(".column-body").appendChild(draggedItem);
-              updateStatus(draggedItem.id, colParent);
-            }
+            col.querySelector(".column-body").appendChild(draggedItem);
+            console.log(draggedItem.id);
+            updateStatus(draggedItem.id, colParent);
+            updateCounts();
           });
         });
       };
+
       getIssues();
       dragEventsOnColumn(columns);
       addIssueBtn.addEventListener("click", () => {
         addIssueForm.style.display = "flex";
       });
-
-      const addIssueFormBtn = document.querySelector("#add-issue-btn");
-      if (addIssueFormBtn) {
-        addIssueFormBtn.addEventListener("click", () => {
-          addIssue();
-        });
-      }
+      document
+        .querySelector("#add-issue-btn")
+        ?.addEventListener("click", () => addIssue());
+      addIssueForm.addEventListener("click", (e) => {
+        if (e.target === addIssueForm) addIssueForm.style.display = "none";
+      });
     </script>
   </body>
 </html>
