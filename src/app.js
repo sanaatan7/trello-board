@@ -3,6 +3,8 @@ const jwt = require("jsonwebtoken");
 const path = require("path");
 const { USERS, ORGANIZATIONS, BOARDS } = require("./db/inMemoryDb.js");
 let { ISSUES } = require("./db/inMemoryDb.js");
+const mongoose = require("mongoose");
+
 const {
   authMiddleware,
   auth2Middleware,
@@ -11,44 +13,54 @@ const {
   auth5MiddleWare,
 } = require("./middleWare.js");
 
-let userCount = 1;
-let orgCount = 1;
-let issuCount = 1;
-let boardCount = 1;
+const connectDB = require("./db/connectDB.js");
+const {
+  userModel,
+  organizationsModel,
+  boardsModel,
+  issuesModel,
+} = require("./db/models.js");
+const { log } = require("console");
+
+// let userCount = 1;
+// let orgCount = 1;
+// let issuNumberCount = 1;
+// let boardCount = 1;
 
 const app = express();
+connectDB();
 
 app.use(express.static(path.join(__dirname, "public")));
 app.use(express.json());
 
-app.post("/signup", (req, res) => {
-  const uName = req.body.userName;
-  const passW = req.body.password;
-  const findUser = USERS.find((u) => u.userName === uName);
-  if (findUser) {
-    res.status(404).json({
-      message: "Invalid user name",
-    });
-    return;
-  }
+app.post("/signup", async (req, res) => {
+  const userName = req.body.userName;
+  const password = req.body.password;
 
-  const id = `${uName}${userCount++}`;
-  const userName = uName;
-  const password = passW;
-  USERS.push({ id, userName, password });
-  res.status(200).json({
-    message: "Successfully signup!!",
-  });
+  try {
+    const findUser = await userModel.findOne({ userName });
+
+    if (findUser) {
+      res.status(404).json({
+        message: "Invalid user name",
+      });
+      return;
+    }
+
+    await userModel.create({ userName, password });
+    res.status(200).json({
+      message: "Successfully signup!!",
+    });
+  } catch (error) {
+    console.log("Error", error.message);
+  }
 });
 
-app.post("/signin", (req, res) => {
-  const uName = req.body.userName;
-  const passW = req.body.password;
+app.post("/signin", async (req, res) => {
+  const userName = req.body.userName;
+  const password = req.body.password;
 
-  const userExist = USERS.find(
-    (u) => u.userName === uName && u.password === passW,
-  );
-  const userId = userExist?.id;
+  const userExist = await userModel.findOne({ userName, password });
   if (!userExist) {
     res.status(404).json({
       message: "User not exist signup first",
@@ -56,6 +68,7 @@ app.post("/signin", (req, res) => {
     return;
   }
 
+  const userId = userExist?._id.toString();
   const token = jwt.sign(
     {
       userId: userId,
@@ -70,36 +83,45 @@ app.post("/signin", (req, res) => {
 
 //AUTHENTICATED ROUTE
 //token, orgtitle, description
-app.post("/organization", authMiddleware, (req, res) => {
+app.post("/organization", authMiddleware, async (req, res) => {
   const orgTitle = req.body.orgTitle;
   const description = req.body.description;
-  const admin = req.userId;
-  const members = [];
-  const id = orgCount++;
-  ORGANIZATIONS.push({ id, orgTitle, description, admin, members });
+  const admin = req._id;
+  await organizationsModel.create({ orgTitle, description, admin });
   res.status(200).json({
     message: "Org created successfully!!",
-    id: orgCount - 1,
   });
 });
 
+app.get("/org-info", authMiddleware, async (req, res) => {
+  const userId = req._id;
+  const userOrganizations = await organizationsModel.find({
+    $or: [{ admin: userId }, { members: userId }],
+  });
+  res.status(200).json({
+    userOrganizations,
+  });
+});
 //token, orgid, userName
 app.post(
   "/add-member-to-organization",
   authMiddleware,
   auth2Middleware,
-  (req, res) => {
+  async (req, res) => {
     const isMember = req.isMember;
-    const organization = req.org;
+    const orgId = req.orgId;
     const memberUserId = req.memberUserId;
     if (isMember) {
       res.status(404).json({
-        message: "This user is already  existed member ",
+        message: "  existed member ",
       });
       return;
     }
 
-    organization.members.push(memberUserId);
+    await organizationsModel.updateOne(
+      { _id: orgId },
+      { $push: { members: memberUserId } },
+    );
 
     res.status(200).json({
       Message: "New member added",
@@ -107,37 +129,73 @@ app.post(
   },
 );
 
+// token, memberUserName, orgId
+app.patch(
+  "/remove-member",
+  authMiddleware,
+  auth2Middleware,
+  async (req, res) => {
+    const isMember = req.isMember;
+    const orgId = req.orgId;
+    const memberUserId = req.memberUserId;
+    if (!isMember) {
+      res.status(404).json({
+        message: "This user is not member ",
+      });
+      return;
+    }
+
+    try {
+      const organization = await organizationsModel.findById({ _id: orgId });
+      organization.members = organization.members.filter(
+        (m) => m != memberUserId,
+      );
+      await organization.save();
+      res.status(200).json({
+        message: `member with id:  ${memberUserId} removed`,
+      });
+    } catch (error) {
+      console.log(error.message);
+    }
+  },
+);
+
 //token, orgid, title
 
-app.post("/board", authMiddleware, auth3Middleware, (req, res) => {
+app.post("/board", authMiddleware, auth3Middleware, async (req, res) => {
   const title = req.body.title;
-  const id = boardCount++;
   const orgId = req.orgId;
-  BOARDS.push({ id, title, orgId });
+
+  await boardsModel.create({ title, orgId });
+  const rawBoard = await boardsModel.findOne({ orgId: orgId, title: title });
+  const board = rawBoard._id?.toString();
+  await organizationsModel.findByIdAndUpdate(orgId, {
+    $push: {
+      boards: board,
+    },
+  });
   res.status(200).json({
     message: "Board is created",
   });
 });
 
 // token, orgId
-app.get("/boards", authMiddleware, auth3Middleware, (req, res) => {
+app.get("/boards", authMiddleware, auth3Middleware, async (req, res) => {
   const orgId = req.orgId;
-  const boards = BOARDS.filter((board) => board.orgId === orgId);
-
+  const boards = await boardsModel.find({ orgId: orgId });
   res.status(200).json({
     boards,
   });
 });
 
 //token,boardId, title
-app.post("/issue", authMiddleware, auth4MiddleWare, (req, res) => {
+app.post("/issue", authMiddleware, auth4MiddleWare, async (req, res) => {
   const title = req.body.title;
   const status = req.body.status;
 
   const boardId = req.boardId;
-  const id = issuCount++;
 
-  ISSUES.push({ id, title, status, boardId });
+  await issuesModel.create({ title, boardId, status });
 
   res.status(200).json({
     message: "Issue is created successfully",
@@ -145,69 +203,38 @@ app.post("/issue", authMiddleware, auth4MiddleWare, (req, res) => {
 });
 
 //token, boardId, issueId, status
-app.patch("/issue", authMiddleware, auth4MiddleWare, (req, res) => {
-  const boardId = req.boardId;
-  const issueId = Number(req.body.issueId);
+app.patch("/issue", authMiddleware, auth4MiddleWare, async (req, res) => {
+  const issueId = req.body.issueId?.replace(/^"|"$/g, "");
   const status = req.body.status;
-  const theIssue = ISSUES.find((i) => i.id === issueId);
+  const theIssue = await issuesModel.findById(issueId);
   if (!theIssue) {
     res.status(404).json({
       message: "invalid issue",
     });
+    return;
   }
   theIssue.status = status;
-  res.status(200);
+  await theIssue.save();
+  res.status(200).json({
+    message: "Issue status updated",
+  });
 });
 
 //token, boardId,
-app.get("/issues", authMiddleware, auth4MiddleWare, (req, res) => {
+app.get("/issues", authMiddleware, auth4MiddleWare, async (req, res) => {
   const boardId = req.boardId;
-  const issues = ISSUES.filter((issue) => {
-    return issue.boardId === boardId;
-  });
-
+  const issues = await issuesModel.find({ boardId: boardId });
+  
   res.status(200).json({
     issues,
   });
 });
 
-app.delete("/issue", authMiddleware, auth5MiddleWare, (req, res) => {
+app.delete("/issue", authMiddleware, auth5MiddleWare, async (req, res) => {
   const issueId = req.issueId;
-  console.log(issueId);
 
-  const kept = ISSUES.filter((i) => i.id != issueId);
-  ISSUES.length = 0;
-  ISSUES.push(...kept);
-  // console.log(ISSUES);
+  await issuesModel.findByIdAndDelete(issueId);
   res.status(200).json({});
-});
-
-app.get("/org-info", authMiddleware, (req, res) => {
-  const userId = req.userId;
-  const userOrganizations = ORGANIZATIONS.filter(
-    (o) => o.admin === userId || o.members.includes(userId),
-  );
-  res.status(200).json({
-    userOrganizations,
-  });
-});
-
-//Delete
-// token, memberUserName, orgId
-app.patch("/remove-member", authMiddleware, auth2Middleware, (req, res) => {
-  const isMember = req.isMember;
-  const organization = req.org;
-  const memberUserId = req.memberUserId;
-  if (!isMember) {
-    res.status(404).json({
-      message: "This user is not member ",
-    });
-    return;
-  }
-  organization.members = organization.members.filter((m) => m != memberUserId);
-  res.status(200).json({
-    message: `member with id:  ${memberUserId} removed`,
-  });
 });
 
 app.get("/", (req, res) => {
