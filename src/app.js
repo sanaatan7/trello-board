@@ -1,9 +1,6 @@
 const express = require("express");
 const jwt = require("jsonwebtoken");
 const path = require("path");
-const { USERS, ORGANIZATIONS, BOARDS } = require("./db/inMemoryDb.js");
-let { ISSUES } = require("./db/inMemoryDb.js");
-const mongoose = require("mongoose");
 
 const {
   authMiddleware,
@@ -20,12 +17,6 @@ const {
   boardsModel,
   issuesModel,
 } = require("./db/models.js");
-const { log } = require("console");
-
-// let userCount = 1;
-// let orgCount = 1;
-// let issuNumberCount = 1;
-// let boardCount = 1;
 
 const app = express();
 connectDB();
@@ -224,7 +215,7 @@ app.patch("/issue", authMiddleware, auth4MiddleWare, async (req, res) => {
 app.get("/issues", authMiddleware, auth4MiddleWare, async (req, res) => {
   const boardId = req.boardId;
   const issues = await issuesModel.find({ boardId: boardId });
-  
+
   res.status(200).json({
     issues,
   });
