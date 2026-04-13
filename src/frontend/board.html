@@ -489,8 +489,6 @@
       const header = document.querySelector("h1");
       const boardContainer = document.querySelector("#boards-container");
       const addBoardDiv = document.querySelector("#add-board");
-      const orgId = localStorage.getItem("orgId");
-      let token = localStorage.getItem("token");
       const addMemberBtn = document.getElementById("add-b3");
       const addMemberForm = document.getElementById("add-member");
 
@@ -503,11 +501,12 @@
 
       const getAllBoards = async () => {
         try {
-          const response = await axios.get("/boards", {
+          const token = localStorage.getItem("token");
+          const orgId = localStorage.getItem("orgId");
+          const response = await axios.get("/api/auth/boards", {
+            params: { orgId },
             headers: {
-              orgId,
-              Authorization: token,
-              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
             },
           });
           const boards = response.data.boards;
@@ -516,8 +515,8 @@
           boards.forEach((board, i) => {
             const div = document.createElement("div");
             div.classList.add("board");
-            div.id = board._id.toString() ?? "";
-            console.log(board._id.toString());
+            div.id = board._id ?? "";
+            console.log(board._id);
             div.innerHTML = `
               <div class="board-num">${String(i + 1).padStart(2, "0")}</div>
               <div class="board-meta">Board</div>
@@ -547,13 +546,13 @@
         const memberUserName = addMemberForm
           .querySelector("input")
           .value.trim();
-        const token = localStorage.getItem("token");
-        const orgId = localStorage.getItem("orgId");
         try {
-          const response = await axios.patch(
-            "/remove-member",
+          const token = localStorage.getItem("token");
+          const orgId = localStorage.getItem("orgId");
+          const response = await axios.post(
+            "/api/auth/remove-member",
             { memberUserName, orgId },
-            { headers: { Authorization: token } },
+            { headers: { Authorization: `Bearer ${token}` } },
           );
           if (response.status === 200) {
             addMemberForm.querySelector("input").value = "";
@@ -577,11 +576,18 @@
         const title = addBoardDiv.querySelector("input")?.value.trim();
         if (!title) return;
         try {
+          const orgId = localStorage.getItem("orgId");
+          const token = localStorage.getItem("token");
           await axios.post(
-            "/board",
+            "/api/auth/board",
             { title },
-            { headers: { Authorization: token, orgId } },
+            {
+              params: { orgId },
+              headers: { Authorization: `Bearer ${token}` },
+            },
           );
+
+          addBoardDiv.querySelector("input").value = "";
           boardContainer.innerHTML = "";
           addBoardDiv.style.display = "none";
           getAllBoards();
@@ -596,13 +602,13 @@
           const memberUserName = addMemberForm
             .querySelector("input")
             .value.trim();
-          const token = localStorage.getItem("token");
-          const orgId = localStorage.getItem("orgId");
           try {
+            const orgId = localStorage.getItem("orgId");
+            const token = localStorage.getItem("token");
             const response = await axios.post(
-              "/add-member-to-organization",
+              "/api/auth/add-member-to-organization",
               { memberUserName, orgId },
-              { headers: { Authorization: token } },
+              { headers: { Authorization: `Bearer ${token}` } },
             );
             if (response.status === 200) {
               addMemberForm.querySelector("input").value = "";

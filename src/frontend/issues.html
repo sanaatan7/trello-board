@@ -610,10 +610,14 @@
       function addDeleteListener(element) {
         element.querySelector("button").addEventListener("click", async () => {
           const issueId = element.id;
+          
           try {
-            await axios.delete("/issue", {
-              params: { issueId },
-              headers: { Authorization: localStorage.getItem("token") },
+            const token = localStorage.getItem("token");
+            const boardId = localStorage.getItem("boardId");
+            const orgId = localStorage.getItem("orgId");
+            await axios.delete("/api/auth/issue", {
+              params: { issueId, boardId, orgId },
+              headers: { Authorization: `Bearer ${token}` },
             });
             element.style.opacity = "0";
             element.style.transform = "scale(0.95) translateY(-4px)";
@@ -658,9 +662,12 @@
 
       const getIssues = async () => {
         try {
-          const response = await axios.get("/issues", {
-            params: { boardId: localStorage.getItem("boardId") },
-            headers: { Authorization: localStorage.getItem("token") },
+          const token = localStorage.getItem("token");
+          const boardId = localStorage.getItem("boardId");
+          const orgId = localStorage.getItem("orgId");
+          const response = await axios.get("/api/auth/issues", {
+            params: { boardId, orgId },
+            headers: { Authorization: `Bearer ${token}` },
           });
           displayIssues(response.data.issues);
         } catch (error) {}
@@ -670,12 +677,15 @@
         const title = addIssueForm.querySelector("input").value.trim();
         if (!title) return;
         try {
+          const token = localStorage.getItem("token");
+          const boardId = localStorage.getItem("boardId");
+          const orgId = localStorage.getItem("orgId");
           await axios.post(
-            "/issue",
+            "/api/auth/issue",
             { title, status: "todo" },
             {
-              params: { boardId: localStorage.getItem("boardId") },
-              headers: { Authorization: localStorage.getItem("token") },
+              params: { boardId, orgId },
+              headers: { Authorization: `Bearer ${token}` },
             },
           );
           addIssueForm.querySelector("input").value = "";
@@ -686,11 +696,16 @@
 
       const updateStatus = async (issueId, status) => {
         await axios.patch(
-          "/issue",
+          "/api/auth/issue",
           { issueId, status },
           {
-            params: { boardId: localStorage.getItem("boardId") },
-            headers: { Authorization: localStorage.getItem("token") },
+            params: {
+              boardId: localStorage.getItem("boardId"),
+              orgId: localStorage.getItem("orgId"),
+            },
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
           },
         );
       };
@@ -719,6 +734,7 @@
             col.classList.remove("drag-over");
             if (!draggedItem) return;
             const colParent = col.id;
+            console.log(colParent);
             col.querySelector(".column-body").appendChild(draggedItem);
             console.log(draggedItem.id);
             updateStatus(draggedItem.id, colParent);

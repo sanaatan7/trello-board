@@ -214,9 +214,8 @@
       signupButton.addEventListener("click", async () => {
         const userName = nameInput.value.trim();
         const password = passwordInput.value.trim();
-        console.log(userName, password);
         if (!userName || !password) return;
-        const response = await axios.post("/signup", { userName, password });
+        const response = await axios.post("/api/auth/signup", { userName, password });
         passwordInput.value = ""; nameInput.value = "";
       });
     </script>

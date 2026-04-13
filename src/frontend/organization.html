@@ -470,8 +470,10 @@
       async function getOrganizations() {
         loadingOverlay.style.display = "block";
         try {
-          const response = await axios.get("/org-info", {
-            headers: { Authorization: localStorage.getItem("token") },
+          const token = localStorage.getItem("token");
+
+          const response = await axios.get("/api/auth/org-info", {
+            headers: { Authorization: `Bearer ${token}` },
           });
           const orgData = response.data.userOrganizations;
           orgsContainer.innerHTML = "";
@@ -512,16 +514,17 @@
         orgBtn.disabled = true;
         orgBtn.textContent = "Creating...";
         try {
+          const token = localStorage.getItem("token");
           await axios.post(
-            "/organization",
+            "/api/auth/org",
             { orgTitle, description },
-            { headers: { Authorization: localStorage.getItem("token") } },
+            { headers: { Authorization: `Bearer ${token}` } },
           );
           organizationTitle.value = "";
           orgdesc.value = "";
           await getOrganizations();
         } catch (e) {
-          console.error(e);
+          console.error(e.message);
         } finally {
           orgBtn.disabled = false;
           orgBtn.textContent = "Create organization →";

@@ -327,7 +327,7 @@
         const userName = nameInput.value.trim();
         const password = passwordInput.value.trim();
         if (!userName || !password) return;
-        const response = await axios.post("/signin", { userName, password });
+        const response = await axios.post("/api/auth/signin", { userName, password });
         localStorage.setItem("token", response.data.token);
         passwordInput.value = "";
         nameInput.value = "";
