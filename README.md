@@ -246,13 +246,3 @@ Authorization: Bearer <your_jwt_token>
 | Command | Description |
 |---------|-------------|
 | `npm run dev` | Start dev server with Nodemon (auto-restart on changes) |
-
----
-
-## 📄 License
-
-This project is licensed under the **ISC License**.
-
----
-
-> Built as part of the **Web Development Bootcamp — Week 10** 🎓
