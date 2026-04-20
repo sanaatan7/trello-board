@@ -1,28 +1,32 @@
 const dataModels = require("../db/models/index.model.js");
 const config = require("../config/config.js");
-const crypto = require("crypto");
+const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
 const signinController = async (req, res) => {
   const { userName, password } = req.body;
-  const cryptedPassword = crypto
-    .createHash("sha256")
-    .update(password)
-    .digest("hex");
   try {
-    const userExist = await dataModels.userModel.findOne({
-      userName,
-      password: cryptedPassword,
-    });
+    const userExist = await dataModels.userModel
+      .findOne({
+        userName,
+      })
+      .select("_id password");
     if (!userExist) {
       res.status(404).json({
         message: "User not exist signup first",
       });
       return;
     }
+    const checkPassword = bcrypt.compare(password, userExist.password);
+    if (!checkPassword) {
+      res.status(404).json({
+        message: "Wrong credentials",
+      });
+      return;
+    }
     const token = jwt.sign(
       {
-        password: cryptedPassword,
+        password: userExist.password,
         userId: userExist._id,
       },
       config.JWT_SECRET,

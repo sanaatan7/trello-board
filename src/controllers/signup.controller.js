@@ -1,5 +1,5 @@
 const dataModels = require("../db/models/index.model.js");
-const crypto = require("crypto");
+const bcrypt = require("bcrypt");
 
 const signupController = async (req, res) => {
   const userName = req.body.userName;
@@ -12,8 +12,8 @@ const signupController = async (req, res) => {
       });
       return;
     }
-    const cryptedPassword = crypto.createHash("sha256").update(password).digest("hex");
-    await dataModels.userModel.create({ userName, password: cryptedPassword });
+    const hashedPassword = await bcrypt.hash(password, 10);
+    await dataModels.userModel.create({ userName, password: hashedPassword });
     res.status(200).json({
       message: "User created successfully",
     });
