@@ -1,9 +1,22 @@
 const dataModels = require("../db/models/index.model.js");
 const bcrypt = require("bcrypt");
+const z = require("zod");
 
+const signupSchema = z.object({
+  userName: z.string().min(3),
+  password: z.string().min(8),
+});
 const signupController = async (req, res) => {
-  const userName = req.body.userName;
-  const password = req.body.password;
+  const { data, success, error } = signupSchema.safeParse(req.body);
+  if (!success) {
+    res.status(404).json({
+      message: `incorrect input`,
+      error: JSON.parse(error),
+    });
+    return;
+  }
+  const userName = data.userName;
+  const password = data.password;
   try {
     const findUser = await dataModels.userModel.findOne({ userName });
     if (findUser) {

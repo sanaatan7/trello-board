@@ -2,9 +2,22 @@ const dataModels = require("../db/models/index.model.js");
 const config = require("../config/config.js");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const z = require("zod");
 
+const signinSchema = z.object({
+  userName: z.string().min(3),
+  password: z.string().min(8),
+});
 const signinController = async (req, res) => {
-  const { userName, password } = req.body;
+  const { data, success, error } = signinSchema.safeParse(req.body);
+  if (!success) {
+    res.status(404).json({
+      message: `incorrect input`,
+      error: JSON.parse(error),
+    });
+    return;
+  }
+  const { userName, password } = data;
   try {
     const userExist = await dataModels.userModel
       .findOne({
